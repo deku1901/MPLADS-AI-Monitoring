@@ -245,3 +245,95 @@ class RecommendationScreenResponse(BaseModel):
     risk_score: int
     recommendation_action: str  # REJECTION_WARNING | PROCEED_TO_SANCTION
 
+
+# ---------------------------------------------------------------------------
+# Citizen Verification Schemas (Slice 3)
+# ---------------------------------------------------------------------------
+
+class CitizenProjectSummary(BaseModel):
+    project_id: str
+    title: str
+    description: str | None = None
+    category: str | None = None
+    location_text: str | None = None
+    lat: float | None = None
+    lon: float | None = None
+    status: str
+    sanctioned_amount_inr: int | None = None
+    citizen_verification_status: str  # VERIFIED_FUNCTIONAL | UNVERIFIED | INSPECTION_REQUIRED
+    positive_reports_count: int
+    negative_reports_count: int
+
+
+class CitizenReportResponse(BaseModel):
+    report_id: str
+    project_id: str
+    is_functional: bool
+    credibility_score: float
+    inspection_triggered: bool
+    case_id: str | None = None
+    new_project_status: str
+
+
+class CitizenReportDetail(BaseModel):
+    report_id: str
+    project_id: str
+    is_functional: bool
+    description: str | None = None
+    photo_path: str | None = None
+    citizen_lat: float | None = None
+    citizen_lon: float | None = None
+    credibility_score: float
+    created_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Split-Work Detection Schemas (Slice 4)
+# ---------------------------------------------------------------------------
+
+class SplitWorkMemberProject(BaseModel):
+    project_id: str
+    title: str
+    description: str | None = None
+    category: str | None = None
+    location_text: str | None = None
+    lat: float | None = None
+    lon: float | None = None
+    sanctioned_amount_inr: int | None = None
+    mandatory_tender: bool
+    status: str
+
+
+class SplitWorkCluster(BaseModel):
+    cluster_id: str
+    corridor_name: str
+    category: str
+    constituency: str
+    member_projects: list[SplitWorkMemberProject]
+    individual_threshold_inr: int
+    total_aggregated_cost_inr: int
+    nlp_corridor_similarity: float
+    overlapping_corridor_tokens: list[str]
+    mandatory_tender_enforced: bool
+    unified_tender_title: str
+    case_id: str | None = None
+
+
+class SplitWorkScanRequest(BaseModel):
+    constituency: str | None = Field(
+        default=None,
+        description="Limit scan to a specific constituency. Omit to scan all constituencies."
+    )
+
+
+class SplitWorkScanResponse(BaseModel):
+    status: str
+    clusters_detected: int
+    clusters_enforced: int
+    clusters: list[SplitWorkCluster]
+
+
+

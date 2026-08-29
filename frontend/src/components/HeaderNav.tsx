@@ -66,7 +66,7 @@ export default function HeaderNav({
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-base)] p-1 rounded-lg border border-[var(--border)] text-xs">
+          <nav className="hidden md:flex items-center gap-1 bg-[var(--bg-base)] p-1 rounded-lg border border-[var(--border)] text-xs">
             <Link
               href={`/projects/${projectId}`}
               className={`px-3 py-1.5 rounded-md transition-colors ${
@@ -86,6 +86,26 @@ export default function HeaderNav({
               }`}
             >
               Slice 2: Recommendation Screen
+            </Link>
+            <Link
+              href="/citizen"
+              className={`px-3 py-1.5 rounded-md transition-colors ${
+                pathname === "/citizen"
+                  ? "bg-[var(--bg-elevated)] text-white font-semibold shadow-xs"
+                  : "text-[var(--text-secondary)] hover:text-white"
+              }`}
+            >
+              Slice 3: Citizen Portal
+            </Link>
+            <Link
+              href="/split-work"
+              className={`px-3 py-1.5 rounded-md transition-colors ${
+                pathname === "/split-work"
+                  ? "bg-[var(--bg-elevated)] text-white font-semibold shadow-xs"
+                  : "text-[var(--text-secondary)] hover:text-white"
+              }`}
+            >
+              Slice 4: Split-Work
             </Link>
           </nav>
         </div>

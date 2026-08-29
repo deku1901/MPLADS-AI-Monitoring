@@ -235,3 +235,85 @@ export interface RecommendationScreenResponse {
   risk_score: number;
   recommendation_action: "REJECTION_WARNING" | "PROCEED_TO_SANCTION" | string;
 }
+
+// ---------------------------------------------------------------------------
+// Citizen Verification (Slice 3)
+// ---------------------------------------------------------------------------
+
+export interface CitizenProjectSummary {
+  project_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  location_text: string | null;
+  lat: number | null;
+  lon: number | null;
+  status: string;
+  sanctioned_amount_inr: number | null;
+  citizen_verification_status: "VERIFIED_FUNCTIONAL" | "UNVERIFIED" | "INSPECTION_REQUIRED" | string;
+  positive_reports_count: number;
+  negative_reports_count: number;
+}
+
+export interface CitizenReportResponse {
+  report_id: string;
+  project_id: string;
+  is_functional: boolean;
+  credibility_score: number;
+  inspection_triggered: boolean;
+  case_id: string | null;
+  new_project_status: string;
+}
+
+export interface CitizenReportDetail {
+  report_id: string;
+  project_id: string;
+  is_functional: boolean;
+  description: string | null;
+  photo_path: string | null;
+  citizen_lat: number | null;
+  citizen_lon: number | null;
+  credibility_score: number;
+  created_at: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Split-Work Anomaly Detection (Slice 4)
+// ---------------------------------------------------------------------------
+
+export interface SplitWorkMemberProject {
+  project_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  location_text: string | null;
+  lat: number | null;
+  lon: number | null;
+  sanctioned_amount_inr: number | null;
+  mandatory_tender: boolean;
+  status: string;
+}
+
+export interface SplitWorkCluster {
+  cluster_id: string;
+  corridor_name: string;
+  category: string;
+  constituency: string;
+  member_projects: SplitWorkMemberProject[];
+  individual_threshold_inr: number;
+  total_aggregated_cost_inr: number;
+  nlp_corridor_similarity: number;
+  overlapping_corridor_tokens: string[];
+  mandatory_tender_enforced: boolean;
+  unified_tender_title: string;
+  case_id: string | null;
+}
+
+export interface SplitWorkScanResponse {
+  status: string;
+  clusters_detected: number;
+  clusters_enforced: number;
+  clusters: SplitWorkCluster[];
+}
+
+

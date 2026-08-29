@@ -351,3 +351,122 @@ def mark_notification_read(notification_id: str, db: Session = Depends(get_db)):
     notif.is_read = True
     db.commit()
     return {"status": "SUCCESS", "notification_id": notification_id, "is_read": True}
+
+
+# ---------------------------------------------------------------------------
+# Citizen Verification Endpoints (Slice 3)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/citizen/projects", response_model=list[schemas.CitizenProjectSummary], tags=["Citizen"])
+def list_citizen_verifiable_projects(db: Session = Depends(get_db)):
+    """Retrieve public geo-tagged project directory with citizen verification status."""
+    from services.citizen import get_citizen_project_summaries
+    return get_citizen_project_summaries(db)
+
+
+@app.post("/api/citizen/reports", response_model=schemas.CitizenReportResponse, tags=["Citizen"])
+async def submit_citizen_verification_report(
+    project_id: str = Form(...),
+    is_functional: bool = Form(...),
+    description: str = Form(""),
+    citizen_lat: float = Form(None),
+    citizen_lon: float = Form(None),
+    photo: UploadFile = File(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Submit a citizen ground-truth verification report (YES/NO) with photo and location.
+    Evaluates credibility and automatically triggers an inspection case if negative consensus >= 3.0.
+    """
+    from services.citizen import submit_citizen_report
+
+    photo_bytes = None
+    photo_filename = ""
+    if photo:
+        photo_bytes = await photo.read()
+        photo_filename = photo.filename or "citizen_photo.jpg"
+
+    try:
+        result = submit_citizen_report(
+            db,
+            project_id=project_id,
+            is_functional=is_functional,
+            description=description,
+            citizen_lat=citizen_lat,
+            citizen_lon=citizen_lon,
+            photo_bytes=photo_bytes,
+            photo_filename=photo_filename,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error submitting citizen report: {e}")
+        raise HTTPException(status_code=500, detail=f"Citizen report failed: {e}")
+
+
+@app.get("/api/projects/{project_id}/citizen-reports", response_model=list[schemas.CitizenReportDetail], tags=["Citizen"])
+def get_project_citizen_reports(project_id: str, db: Session = Depends(get_db)):
+    """Retrieve all citizen ground-truth reports submitted for a project."""
+    from models import CitizenReport
+    reports = (
+        db.query(CitizenReport)
+        .filter_by(project_id=project_id)
+        .order_by(CitizenReport.created_at.desc())
+        .all()
+    )
+    return reports
+
+
+# ---------------------------------------------------------------------------
+# Split-Work Anomaly Detection Endpoints (Slice 4)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/anomalies/split-work",
+    response_model=list[schemas.SplitWorkCluster],
+    tags=["Anomalies"],
+)
+def get_split_work_clusters(db: Session = Depends(get_db)):
+    """
+    Read-only detection of artificial work-splitting clusters.
+    Returns all detected clusters with member projects, corridor similarity, and enforcement status.
+    No state is modified.
+    """
+    try:
+        from services.split_work import get_split_work_clusters as _get_clusters
+        clusters = _get_clusters(db)
+        return clusters
+    except Exception as e:
+        logger.error(f"Error detecting split-work clusters: {e}")
+        raise HTTPException(status_code=500, detail=f"Split-work detection failed: {e}")
+
+
+@app.post(
+    "/api/anomalies/split-work/scan",
+    response_model=schemas.SplitWorkScanResponse,
+    tags=["Anomalies"],
+)
+def trigger_split_work_scan(
+    body: schemas.SplitWorkScanRequest | None = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Scan for split-work clusters and enforce mandatory public e-tendering.
+
+    - Sets mandatory_tender=True on all detected cluster member projects.
+    - Creates a DA intervention Case for each cluster.
+    - Writes audit events: SPLIT_WORK_DETECTED, MANDATORY_TENDER_ENFORCED.
+    - Dispatches DA and MoSPI notifications.
+    - Idempotent: repeated calls will not create duplicate cases/audit events.
+    """
+    try:
+        from services.split_work import enforce_split_work_clusters
+        constituency = body.constituency if body else None
+        result = enforce_split_work_clusters(db, constituency=constituency)
+        return result
+    except Exception as e:
+        logger.error(f"Error enforcing split-work clusters: {e}")
+        raise HTTPException(status_code=500, detail=f"Split-work enforcement failed: {e}")
+
+

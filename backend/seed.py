@@ -22,7 +22,7 @@ from models import (
     Base, MP, Authority, Project, PaymentRequest,
     ProgressRecord, ImageHash, RiskScoreEvent,
     Case, EvidenceSubmission, EscalationEvent,
-    Notification, AuditEvent
+    Notification, AuditEvent, CitizenReport
 )
 
 logger = logging.getLogger("seed")
@@ -44,6 +44,7 @@ def reset_and_seed_db(db: Session | None = None) -> dict:
         create_tables()
 
         # Delete all existing data in reverse foreign key order
+        db.query(CitizenReport).delete()
         db.query(Notification).delete()
         db.query(EscalationEvent).delete()
         db.query(EvidenceSubmission).delete()
@@ -265,6 +266,94 @@ def reset_and_seed_db(db: Session | None = None) -> dict:
             timestamp=sanct_date,
         )
         db.add(initial_audit)
+
+        # -------------------------------------------------------------------
+        # 8. Vertical Slice 4 Demo — Split-Work Corridor Projects
+        #    Three CC Road work orders artificially split below ₹5L to evade e-tender.
+        #    Total = ₹14,40,000 > ₹10,00,000 mandatory threshold.
+        # -------------------------------------------------------------------
+        sw1 = Project(
+            project_id="MPL-2026-1051",
+            mp_id=mp.mp_id,
+            title="Construction of CC Road Reach 1: Shivpur Chowk to Temple",
+            description=(
+                "Construction of cement concrete road from Shivpur Chowk crossing to "
+                "the ancient temple, approximately 250 metres in length, "
+                "including side drains and kerb stones, Harhua Block, Varanasi."
+            ),
+            category="ROADS_BRIDGES",
+            location_text="Shivpur Chowk, Harhua Block, Varanasi",
+            lat=25.3540,
+            lon=82.9480,
+            constituency="Varanasi",
+            state="Uttar Pradesh",
+            recommended_amount_inr=4_60_000,
+            sanctioned_amount_inr=4_80_000,
+            implementing_agency="DRDA Varanasi",
+            status="SANCTIONED",
+            risk_score=28,
+            risk_breakdown={"financial": 12.0, "timeline": 8.0, "duplicate": 0.0, "compliance": 0.0, "cv": 0.0},
+            mandatory_tender=False,
+            missing_documents=[],
+            recommendation_date=rec_date + timedelta(days=5),
+            sanction_date=sanct_date + timedelta(days=5),
+            created_at=rec_date + timedelta(days=5),
+        )
+        sw2 = Project(
+            project_id="MPL-2026-1052",
+            mp_id=mp.mp_id,
+            title="Construction of CC Road Reach 2: Temple to Primary School",
+            description=(
+                "Construction of cement concrete road from the ancient temple to "
+                "Government Primary School, approximately 250 metres in length, "
+                "including side drains and kerb stones, Harhua Block, Varanasi."
+            ),
+            category="ROADS_BRIDGES",
+            location_text="Near Temple, Harhua Block, Varanasi",
+            lat=25.3545,
+            lon=82.9490,
+            constituency="Varanasi",
+            state="Uttar Pradesh",
+            recommended_amount_inr=4_60_000,
+            sanctioned_amount_inr=4_80_000,
+            implementing_agency="DRDA Varanasi",
+            status="SANCTIONED",
+            risk_score=28,
+            risk_breakdown={"financial": 12.0, "timeline": 8.0, "duplicate": 0.0, "compliance": 0.0, "cv": 0.0},
+            mandatory_tender=False,
+            missing_documents=[],
+            recommendation_date=rec_date + timedelta(days=5),
+            sanction_date=sanct_date + timedelta(days=5),
+            created_at=rec_date + timedelta(days=5),
+        )
+        sw3 = Project(
+            project_id="MPL-2026-1053",
+            mp_id=mp.mp_id,
+            title="Construction of CC Road Reach 3: Primary School to Canal Bridge",
+            description=(
+                "Construction of cement concrete road from Government Primary School "
+                "to the canal bridge approach, approximately 250 metres in length, "
+                "including side drains and kerb stones, Harhua Block, Varanasi."
+            ),
+            category="ROADS_BRIDGES",
+            location_text="Near Primary School, Harhua Block, Varanasi",
+            lat=25.3552,
+            lon=82.9500,
+            constituency="Varanasi",
+            state="Uttar Pradesh",
+            recommended_amount_inr=4_60_000,
+            sanctioned_amount_inr=4_80_000,
+            implementing_agency="DRDA Varanasi",
+            status="SANCTIONED",
+            risk_score=28,
+            risk_breakdown={"financial": 12.0, "timeline": 8.0, "duplicate": 0.0, "compliance": 0.0, "cv": 0.0},
+            mandatory_tender=False,
+            missing_documents=[],
+            recommendation_date=rec_date + timedelta(days=5),
+            sanction_date=sanct_date + timedelta(days=5),
+            created_at=rec_date + timedelta(days=5),
+        )
+        db.add_all([sw1, sw2, sw3])
 
         db.commit()
         logger.info(f"Database seeded successfully. Project {project.project_id} initialized with Risk: {project.risk_score}")

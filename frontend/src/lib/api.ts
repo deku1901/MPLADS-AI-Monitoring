@@ -17,7 +17,13 @@ import type {
   SeedResetResponse,
   RecommendationScreenRequest,
   RecommendationScreenResponse,
+  CitizenProjectSummary,
+  CitizenReportResponse,
+  CitizenReportDetail,
+  SplitWorkCluster,
+  SplitWorkScanResponse,
 } from "./types";
+
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -222,3 +228,73 @@ export async function screenRecommendation(
     body: JSON.stringify(params),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Citizen Verification (Slice 3)
+// ---------------------------------------------------------------------------
+
+export async function getCitizenProjects(): Promise<CitizenProjectSummary[]> {
+  return request<CitizenProjectSummary[]>("/api/citizen/projects");
+}
+
+export async function submitCitizenReport(params: {
+  project_id: string;
+  is_functional: boolean;
+  description?: string;
+  citizen_lat?: number;
+  citizen_lon?: number;
+  photo?: File;
+}): Promise<CitizenReportResponse> {
+  const form = new FormData();
+  form.append("project_id", params.project_id);
+  form.append("is_functional", String(params.is_functional));
+  if (params.description) form.append("description", params.description);
+  if (params.citizen_lat != null) form.append("citizen_lat", String(params.citizen_lat));
+  if (params.citizen_lon != null) form.append("citizen_lon", String(params.citizen_lon));
+  if (params.photo) {
+    form.append("photo", params.photo, params.photo.name);
+  }
+
+  const res = await fetch(`${BASE_URL}/api/citizen/reports`, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      detail = body?.detail ?? detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(detail);
+  }
+
+  return res.json() as Promise<CitizenReportResponse>;
+}
+
+export async function getProjectCitizenReports(
+  projectId: string
+): Promise<CitizenReportDetail[]> {
+  return request<CitizenReportDetail[]>(`/api/projects/${projectId}/citizen-reports`);
+}
+
+// ---------------------------------------------------------------------------
+// Split-Work Anomaly Detection (Slice 4)
+// ---------------------------------------------------------------------------
+
+/** Read-only: detect split-work clusters without enforcing anything. */
+export async function getSplitWorkClusters(): Promise<SplitWorkCluster[]> {
+  return request<SplitWorkCluster[]>("/api/anomalies/split-work");
+}
+
+/** Enforce mandatory public e-tender on all detected split-work clusters. Idempotent. */
+export async function triggerSplitWorkScan(constituency?: string): Promise<SplitWorkScanResponse> {
+  return request<SplitWorkScanResponse>("/api/anomalies/split-work/scan", {
+    method: "POST",
+    body: JSON.stringify({ constituency: constituency ?? null }),
+  });
+}
+
+
