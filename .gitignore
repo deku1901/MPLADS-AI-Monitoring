@@ -39,3 +39,18 @@ out/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# =========================
+# SQLite database
+# =========================
+
+*.db
+*.db-shm
+*.db-wal
+
+# =========================
+# Uploaded evidence / runtime files
+# =========================
+
+uploads/
+backend/uploads/

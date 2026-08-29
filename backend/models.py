@@ -125,6 +125,7 @@ class Project(Base):
     image_hashes = relationship("ImageHash", back_populates="project")
     cases = relationship("Case", back_populates="project")
     audit_events = relationship("AuditEvent", back_populates="project")
+    citizen_reports = relationship("CitizenReport", back_populates="project")
 
 
 # ---------------------------------------------------------------------------
@@ -320,3 +321,24 @@ class AuditEvent(Base):
     timestamp = Column(DateTime, default=_now)
 
     project = relationship("Project", back_populates="audit_events")
+
+
+# ---------------------------------------------------------------------------
+# Citizen Report (Slice 3: Ground-Truth Public Verification)
+# ---------------------------------------------------------------------------
+
+class CitizenReport(Base):
+    __tablename__ = "citizen_report"
+
+    report_id = Column(String, primary_key=True, default=_uuid)
+    project_id = Column(String, ForeignKey("project.project_id"), nullable=False)
+    is_functional = Column(Boolean, nullable=False)
+    description = Column(Text, nullable=True)
+    photo_path = Column(String, nullable=True)
+    citizen_lat = Column(Float, nullable=True)
+    citizen_lon = Column(Float, nullable=True)
+    credibility_score = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=_now)
+
+    project = relationship("Project", back_populates="citizen_reports")
+
