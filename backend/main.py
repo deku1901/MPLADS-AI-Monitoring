@@ -142,6 +142,31 @@ async def create_payment_request(
 
 
 # ---------------------------------------------------------------------------
+# Recommendation Screening Endpoints (Slice 2)
+# ---------------------------------------------------------------------------
+@app.post("/api/projects/recommend", response_model=schemas.RecommendationScreenResponse, tags=["Projects"])
+def screen_new_recommendation(
+    payload: schemas.RecommendationScreenRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Screen a new MP project recommendation for semantic duplicate works (Slice 2).
+    Evaluates semantic overlap against existing sanctioned projects in the constituency.
+    """
+    from ai_engine.engine import screen_recommendation
+
+    result = screen_recommendation(
+        title=payload.title,
+        description=payload.description,
+        category=payload.category,
+        constituency=payload.constituency,
+        estimated_cost_inr=payload.estimated_cost_inr,
+        db=db,
+    )
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Project Endpoints
 # ---------------------------------------------------------------------------
 @app.get("/api/projects/{project_id}", response_model=schemas.ProjectDetail, tags=["Projects"])

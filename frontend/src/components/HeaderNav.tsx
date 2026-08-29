@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { getNotifications } from "@/lib/api";
 
 interface HeaderNavProps {
@@ -16,6 +18,7 @@ export default function HeaderNav({
   onResetDemo,
   isResetting = false,
 }: HeaderNavProps) {
+  const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -42,23 +45,49 @@ export default function HeaderNav({
     <header className="w-full border-b border-[var(--border-strong)] bg-[var(--bg-surface)]/95 backdrop-blur-sm sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between gap-4">
         {/* Brand & Context */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-lg shadow-inner">
-            🏛️
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-[var(--text-primary)] tracking-wide">
-                MPLADS AI MONITORING
-              </span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-950 text-blue-300 border border-blue-800">
-                MVP v1.0
-              </span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-lg shadow-inner">
+              🏛️
             </div>
-            <p className="text-[11px] text-[var(--text-muted)]">
-              Closed-Loop Statutory Oversight &amp; Intervention Engine
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-[var(--text-primary)] tracking-wide">
+                  MPLADS AI MONITORING
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-950 text-blue-300 border border-blue-800">
+                  MVP v1.0
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                Closed-Loop Statutory Oversight &amp; Intervention Engine
+              </p>
+            </div>
           </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-base)] p-1 rounded-lg border border-[var(--border)] text-xs">
+            <Link
+              href={`/projects/${projectId}`}
+              className={`px-3 py-1.5 rounded-md transition-colors ${
+                pathname?.includes("/projects")
+                  ? "bg-[var(--bg-elevated)] text-white font-semibold shadow-xs"
+                  : "text-[var(--text-secondary)] hover:text-white"
+              }`}
+            >
+              Slice 1: Payment Intervention
+            </Link>
+            <Link
+              href="/recommend"
+              className={`px-3 py-1.5 rounded-md transition-colors ${
+                pathname === "/recommend"
+                  ? "bg-[var(--bg-elevated)] text-white font-semibold shadow-xs"
+                  : "text-[var(--text-secondary)] hover:text-white"
+              }`}
+            >
+              Slice 2: Recommendation Screen
+            </Link>
+          </nav>
         </div>
 
         {/* Project Context & Controls */}

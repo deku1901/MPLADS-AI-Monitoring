@@ -15,6 +15,8 @@ import type {
   AuditEventSummary,
   EvidenceSubmitResponse,
   SeedResetResponse,
+  RecommendationScreenRequest,
+  RecommendationScreenResponse,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -206,4 +208,17 @@ export async function resetDemoSeed(): Promise<SeedResetResponse> {
 
 export async function getHealth(): Promise<{ status: string }> {
   return request<{ status: string }>("/api/health");
+}
+
+// ---------------------------------------------------------------------------
+// Recommendation Screening (Slice 2)
+// ---------------------------------------------------------------------------
+
+export async function screenRecommendation(
+  params: RecommendationScreenRequest
+): Promise<RecommendationScreenResponse> {
+  return request<RecommendationScreenResponse>("/api/projects/recommend", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
 }

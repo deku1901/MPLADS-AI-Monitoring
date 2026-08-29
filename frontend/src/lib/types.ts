@@ -201,3 +201,37 @@ export interface SeedResetResponse {
   ministry_id: string;
   mp_id: string;
 }
+
+// ---------------------------------------------------------------------------
+// Recommendation Screening (Slice 2)
+// ---------------------------------------------------------------------------
+
+export interface RecommendationScreenRequest {
+  title: string;
+  description: string;
+  category?: string;
+  constituency?: string;
+  state?: string;
+  estimated_cost_inr: number;
+  mp_id?: string;
+}
+
+export interface MatchedProjectSummary {
+  project_id: string;
+  title: string;
+  description: string | null;
+  location_text: string | null;
+  status: string;
+  sanctioned_amount_inr: number | null;
+}
+
+export interface RecommendationScreenResponse {
+  is_duplicate: boolean;
+  similarity_score: number;
+  threshold: number;
+  matched_project: MatchedProjectSummary | null;
+  overlapping_keywords: string[];
+  reason_codes: string[];
+  risk_score: number;
+  recommendation_action: "REJECTION_WARNING" | "PROCEED_TO_SANCTION" | string;
+}

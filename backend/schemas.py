@@ -210,3 +210,38 @@ class SeedResetResponse(BaseModel):
     sna_id: str
     ministry_id: str
     mp_id: str
+
+
+# ---------------------------------------------------------------------------
+# Recommendation Screening Schemas (Slice 2)
+# ---------------------------------------------------------------------------
+
+class RecommendationScreenRequest(BaseModel):
+    title: str = Field(..., description="Proposed project title")
+    description: str = Field(..., description="Proposed detailed work description")
+    category: str = Field(default="DRINKING_WATER", description="Project category")
+    constituency: str = Field(default="Varanasi", description="Parliamentary constituency")
+    state: str = Field(default="Uttar Pradesh", description="State")
+    estimated_cost_inr: int = Field(..., description="Estimated cost in INR")
+    mp_id: str = Field(default="MP-UP-042", description="Recommending MP ID")
+
+
+class MatchedProjectSummary(BaseModel):
+    project_id: str
+    title: str
+    description: str | None = None
+    location_text: str | None = None
+    status: str
+    sanctioned_amount_inr: int | None = None
+
+
+class RecommendationScreenResponse(BaseModel):
+    is_duplicate: bool
+    similarity_score: float
+    threshold: float
+    matched_project: MatchedProjectSummary | None = None
+    overlapping_keywords: list[str] = []
+    reason_codes: list[str] = []
+    risk_score: int
+    recommendation_action: str  # REJECTION_WARNING | PROCEED_TO_SANCTION
+

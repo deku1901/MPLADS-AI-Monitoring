@@ -11,6 +11,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from config import settings
 from ai_engine import cv as cv_module
 from ai_engine import ml as ml_module
 from ai_engine import rules as rules_module
@@ -110,3 +111,58 @@ def run_analysis(inp: AnalysisInput, db: Session) -> AnalysisResult:
         financial=financial,
         compliance=compliance,
     )
+
+
+def screen_recommendation(
+    title: str,
+    description: str,
+    category: str,
+    constituency: str,
+    estimated_cost_inr: int,
+    db: Session,
+) -> dict:
+    """
+    Screen a new MP recommendation for duplicates against existing projects.
+    """
+    from ai_engine import nlp as nlp_module
+    from models import Project
+
+    # Query candidate projects (prioritize same constituency)
+    candidates = db.query(Project).all()
+    candidate_dicts = [
+        {
+            "project_id": p.project_id,
+            "title": p.title,
+            "description": p.description or "",
+            "location_text": p.location_text or "",
+            "status": p.status,
+            "sanctioned_amount_inr": p.sanctioned_amount_inr,
+        }
+        for p in candidates
+    ]
+
+    screening = nlp_module.screen_recommendation_against_projects(
+        proposed_title=title,
+        proposed_description=description,
+        candidate_projects=candidate_dicts,
+    )
+
+    is_dup = screening["is_duplicate"]
+    sim = screening["similarity_score"]
+
+    # Compute pre-sanction screening risk score
+    # Duplicate adds significant duplicate sub-score
+    risk_score = int(round(sim * 70)) if is_dup else int(round(sim * 25))
+    action = "REJECTION_WARNING" if is_dup else "PROCEED_TO_SANCTION"
+
+    return {
+        "is_duplicate": is_dup,
+        "similarity_score": sim,
+        "threshold": settings.NLP_DUPLICATE_THRESHOLD,
+        "matched_project": screening["matched_project"],
+        "overlapping_keywords": screening["overlapping_keywords"],
+        "reason_codes": screening["reason_codes"],
+        "risk_score": risk_score,
+        "recommendation_action": action,
+    }
+
