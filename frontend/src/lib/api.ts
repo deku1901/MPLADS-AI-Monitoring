@@ -135,6 +135,7 @@ export async function submitEvidence(
     content_type?: string;
     content_text?: string;
     justification_reduces_duplicate?: boolean;
+    image?: File;
   }
 ): Promise<EvidenceSubmitResponse> {
   // Evidence endpoint accepts form data, but also falls back to JSON via payload param.
@@ -148,6 +149,9 @@ export async function submitEvidence(
     "justification_reduces_duplicate",
     String(params.justification_reduces_duplicate ?? true)
   );
+  if (params.image) {
+    form.append("image", params.image, params.image.name);
+  }
 
   const res = await fetch(`${BASE_URL}/api/cases/${caseId}/evidence`, {
     method: "POST",

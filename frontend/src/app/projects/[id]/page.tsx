@@ -1,13 +1,22 @@
 "use client";
 
 import { use, useEffect, useState, useCallback } from "react";
-import { getProject } from "@/lib/api";
-import type { ProjectDetail, PaymentSubmitResponse } from "@/lib/types";
+import { getProject, getCase, getProjectAudit, resetDemoSeed } from "@/lib/api";
+import type {
+  ProjectDetail,
+  PaymentSubmitResponse,
+  CaseDetail,
+  EvidenceSubmitResponse,
+  AuditEventSummary,
+} from "@/lib/types";
 import RiskBadge from "@/components/RiskBadge";
 import RiskBreakdownBar from "@/components/RiskBreakdownBar";
 import PaymentPanel from "@/components/PaymentPanel";
 import InterventionBanner from "@/components/InterventionBanner";
 import AiAnalyzingOverlay from "@/components/AiAnalyzingOverlay";
+import CaseReviewCard from "@/components/CaseReviewCard";
+import CaseResolvedBanner from "@/components/CaseResolvedBanner";
+import AuditTrailTimeline from "@/components/AuditTrailTimeline";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +43,7 @@ function StatusPill({ status }: { status: string }) {
     EXECUTION:        "pill pill-execution",
     COMPLETED:        "pill pill-approved",
     HELD_FOR_REVIEW:  "pill pill-held",
+    APPROVED_FOR_REVIEW: "pill pill-approved",
     PAYMENT_RELEASED: "pill pill-approved",
     SUBMITTED:        "pill pill-accent",
   };
@@ -93,44 +103,108 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // ── F2: Payment / AI result state ─────────────────────────────────────────
-  /**
-   * paymentResult  — the real PaymentSubmitResponse from the backend.
-   * prevRisk       — the project risk score at the moment Submit was clicked.
-   * analyzing      — true while POST /api/payments is in flight.
-   * displayRisk    — the score currently shown in the badge (may differ from
-   *                  project.risk_score after a payment hold).
-   */
   const [paymentResult, setPaymentResult] = useState<PaymentSubmitResponse | null>(null);
   const [prevRisk, setPrevRisk] = useState<number>(0);
   const [analyzing, setAnalyzing] = useState(false);
   const [displayRisk, setDisplayRisk] = useState<number | null>(null);
   const [displayBreakdown, setDisplayBreakdown] = useState<Record<string, number> | null>(null);
 
-  // ── Load project ──────────────────────────────────────────────────────────
+  // ── F3: Case & Evidence State ─────────────────────────────────────────────
+  const [activeCase, setActiveCase] = useState<CaseDetail | null>(null);
+  const [resolvedEvidenceResult, setResolvedEvidenceResult] = useState<EvidenceSubmitResponse | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditEventSummary[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const [resettingSeed, setResettingSeed] = useState(false);
+
+  // ── Load project & audit ──────────────────────────────────────────────────
+  const loadAudit = useCallback(async () => {
+    setLoadingAudit(true);
+    try {
+      const events = await getProjectAudit(id);
+      setAuditEvents(events);
+    } catch {
+      // Audit fail non-critical
+    } finally {
+      setLoadingAudit(false);
+    }
+  }, [id]);
+
+  const loadCase = useCallback(async (caseId: string) => {
+    try {
+      const c = await getCase(caseId);
+      setActiveCase(c);
+    } catch {
+      // Case load non-critical
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
       const data = await getProject(id);
       setProject(data);
-      // Only reset display risk from project if no payment result yet
-      setDisplayRisk((prev) => prev === null ? data.risk_score : prev);
+      setDisplayRisk(data.risk_score);
+      if (data.risk_breakdown) {
+        const bd: Record<string, number> = {};
+        for (const [k, v] of Object.entries(data.risk_breakdown)) {
+          if (typeof v === "number") bd[k] = v;
+        }
+        setDisplayBreakdown(bd);
+      }
+
+      // Check if project already has a held payment with an auto-created case
+      const suffix = id.split("-").pop();
+      if (suffix) {
+        loadCase(`CASE-${suffix}`);
+      }
+      loadAudit();
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : "Unknown error");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadCase, loadAudit]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let ignore = false;
+    async function fetchData() {
+      try {
+        const data = await getProject(id);
+        if (!ignore) {
+          setProject(data);
+          setDisplayRisk(data.risk_score);
+          if (data.risk_breakdown) {
+            const bd: Record<string, number> = {};
+            for (const [k, v] of Object.entries(data.risk_breakdown)) {
+              if (typeof v === "number") bd[k] = v;
+            }
+            setDisplayBreakdown(bd);
+          }
+          const suffix = id.split("-").pop();
+          if (suffix) {
+            loadCase(`CASE-${suffix}`);
+          }
+          loadAudit();
+          setLoading(false);
+        }
+      } catch (e: unknown) {
+        if (!ignore) {
+          setLoadError(e instanceof Error ? e.message : "Unknown error");
+          setLoading(false);
+        }
+      }
+    }
+    fetchData();
+    return () => {
+      ignore = true;
+    };
+  }, [id, loadCase, loadAudit]);
 
-  // ── After successful payment: update display state from backend response ──
+  // ── F2: After successful payment: update display state from backend ──────
   function handlePaymentSuccess(result: PaymentSubmitResponse, capturedPrevRisk: number) {
     setPaymentResult(result);
     setPrevRisk(capturedPrevRisk);
-    // Update displayed risk score and breakdown from the real response
     setDisplayRisk(result.risk_score);
     if (result.risk_breakdown) {
       const bd: Record<string, number> = {};
@@ -139,8 +213,57 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       }
       setDisplayBreakdown(bd);
     }
-    // Re-fetch project so payment history and status are fresh
+
+    // Load newly created case from backend
+    if (result.case_id) {
+      loadCase(result.case_id);
+    }
+
+    // Refresh project details & audit trail
     load();
+  }
+
+  // ── F3: After successful evidence submission ──────────────────────────────
+  async function handleEvidenceSubmitted(res: EvidenceSubmitResponse) {
+    setAnalyzing(false);
+    if (res.case_status === "RESOLVED") {
+      setResolvedEvidenceResult(res);
+    }
+
+    // Update risk score from backend response
+    setDisplayRisk(res.risk_after);
+
+    // Refresh case details, project state, and audit log
+    if (activeCase) {
+      await loadCase(activeCase.case_id);
+    }
+    const freshProj = await getProject(id);
+    setProject(freshProj);
+    if (freshProj.risk_breakdown) {
+      const bd: Record<string, number> = {};
+      for (const [k, v] of Object.entries(freshProj.risk_breakdown)) {
+        if (typeof v === "number") bd[k] = v;
+      }
+      setDisplayBreakdown(bd);
+    }
+    await loadAudit();
+  }
+
+  // ── Reset demo to clean seed state ────────────────────────────────────────
+  async function handleResetDemo() {
+    if (resettingSeed) return;
+    setResettingSeed(true);
+    try {
+      await resetDemoSeed();
+      setPaymentResult(null);
+      setActiveCase(null);
+      setResolvedEvidenceResult(null);
+      await load();
+    } catch (err) {
+      alert("Failed to reset demo: " + (err instanceof Error ? err.message : "Error"));
+    } finally {
+      setResettingSeed(false);
+    }
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -186,17 +309,17 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const shownRisk      = displayRisk ?? project.risk_score;
   const shownBreakdown = displayBreakdown ?? project.risk_breakdown ?? {};
   const isHighRisk     = shownRisk >= 70;
-  const isHeld         = paymentResult?.status === "HELD_FOR_REVIEW";
+  const hasHeldPayment = project.payments.some((p) => p.status === "HELD_FOR_REVIEW");
+  const isHeld         = (paymentResult?.status === "HELD_FOR_REVIEW") || hasHeldPayment;
 
-  // ── Project View ──────────────────────────────────────────────────────────
   return (
     <>
-      {/* AI analyzing fullscreen overlay (shown while POST /api/payments is in-flight) */}
+      {/* AI analyzing fullscreen overlay */}
       {analyzing && <AiAnalyzingOverlay />}
 
       <main className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto space-y-8 fade-in">
 
-        {/* ── Top Bar ── */}
+        {/* ── Top Bar with Demo Controls ── */}
         <header className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] uppercase tracking-widest">
             <span className="text-[var(--accent)] font-bold">MPLADS AI Platform</span>
@@ -205,16 +328,37 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             <span className="text-[var(--border-strong)]">›</span>
             <span className="text-[var(--text-primary)]">{project.project_id}</span>
           </div>
-          <button
-            onClick={load}
-            className="text-xs px-3 py-1.5 rounded-md bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
-          >
-            ↻ Refresh
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetDemo}
+              disabled={resettingSeed}
+              className="text-xs px-3 py-1.5 rounded-md bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              <span>🔄</span>
+              <span>{resettingSeed ? "Resetting…" : "Reset Demo (Risk 32)"}</span>
+            </button>
+            <button
+              onClick={load}
+              className="text-xs px-3 py-1.5 rounded-md bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
+            >
+              ↻ Refresh
+            </button>
+          </div>
         </header>
 
-        {/* ── Intervention Banner (appears after payment hold) ── */}
-        {paymentResult && isHeld && (
+        {/* ── Case Resolved Banner (Shown after successful evidence submission) ── */}
+        {resolvedEvidenceResult && (
+          <section>
+            <CaseResolvedBanner
+              result={resolvedEvidenceResult}
+              onDismiss={() => setResolvedEvidenceResult(null)}
+            />
+          </section>
+        )}
+
+        {/* ── Intervention Banner (appears after payment hold, hidden once resolved) ── */}
+        {paymentResult && isHeld && !resolvedEvidenceResult && (
           <section>
             <InterventionBanner
               result={paymentResult}
@@ -231,8 +375,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               {project.title}
             </h1>
             <StatusPill status={project.status} />
-            {/* If payment is held, show a secondary held badge */}
-            {isHeld && <StatusPill status="HELD_FOR_REVIEW" />}
+            {isHeld && !resolvedEvidenceResult && <StatusPill status="HELD_FOR_REVIEW" />}
+            {resolvedEvidenceResult && <StatusPill status="APPROVED_FOR_REVIEW" />}
           </div>
           {project.description && (
             <p className="mt-2 text-sm text-[var(--text-secondary)] max-w-3xl leading-relaxed">
@@ -262,11 +406,18 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </p>
             <RiskBadge score={shownRisk} size="lg" pulse={isHighRisk} />
 
-            {/* Show previous score if transition happened */}
             {paymentResult && (
               <p className="text-xs text-[var(--text-muted)]">
-                Previously:{" "}
-                <span className="text-green-400 font-semibold">{prevRisk}</span>
+                Initial:{" "}
+                <span className="text-green-400 font-semibold">{prevRisk || 32}</span>
+                {resolvedEvidenceResult && (
+                  <>
+                    {" → Peak: "}
+                    <span className="text-red-400 font-semibold">{paymentResult.risk_score}</span>
+                    {" → Current: "}
+                    <span className="text-green-400 font-semibold">{shownRisk}</span>
+                  </>
+                )}
               </p>
             )}
 
@@ -324,7 +475,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         {project.payments.length > 0 && (
           <section className="card">
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-4">
-              Payment History
+              Payment History & Release Audit
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -372,8 +523,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         )}
 
         {/* ── F2: Payment Submission Panel ── */}
-        {/* Only show if no payment has been held yet (avoid double-submission in demo) */}
-        {!isHeld && (
+        {/* Only show when there is no active held payment */}
+        {!isHeld && !activeCase && (
           <section>
             <PaymentPanel
               projectId={project.project_id}
@@ -384,26 +535,25 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </section>
         )}
 
-        {/* ── Post-hold: Case review CTA (preview of F3) ── */}
-        {isHeld && paymentResult?.case_id && (
-          <section className="card border-amber-700/40 bg-amber-950/20">
-            <p className="text-xs text-amber-400 uppercase tracking-wider font-semibold mb-2">
-              Next: Case Review & Evidence Submission
-            </p>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Case{" "}
-              <span className="font-mono font-bold text-amber-300">
-                {paymentResult.case_id}
-              </span>{" "}
-              has been assigned to the District Authority for review.
-              The DA must respond within the SLA window or the case will
-              automatically escalate to the State Nodal Authority.
-            </p>
-            <p className="mt-3 text-xs text-[var(--text-muted)]">
-              Case review and evidence submission coming in phase F3.
-            </p>
+        {/* ── F3: Case Review & Authority Evidence Submission ── */}
+        {activeCase && (
+          <section>
+            <CaseReviewCard
+              caseData={activeCase}
+              onReevaluateStart={() => setAnalyzing(true)}
+              onEvidenceSubmitted={handleEvidenceSubmitted}
+            />
           </section>
         )}
+
+        {/* ── F3: Immutable Chronological Audit Trail ── */}
+        <section>
+          <AuditTrailTimeline
+            events={auditEvents}
+            loading={loadingAudit}
+            onRefresh={loadAudit}
+          />
+        </section>
 
       </main>
     </>
