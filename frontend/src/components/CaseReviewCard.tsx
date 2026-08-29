@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { submitEvidence } from "@/lib/api";
 import type { CaseDetail, EvidenceSubmitResponse } from "@/lib/types";
+import EscalationTracker from "@/components/EscalationTracker";
 
 interface CaseReviewCardProps {
   caseData: CaseDetail;
@@ -163,6 +164,9 @@ export default function CaseReviewCard({
           </p>
         </div>
       </div>
+
+      {/* ── Multi-Tier Escalation Ladder ── */}
+      <EscalationTracker caseData={caseData} />
 
       {/* ── Reason Codes ── */}
       {caseData.reason_codes && caseData.reason_codes.length > 0 && (

@@ -17,6 +17,8 @@ import AiAnalyzingOverlay from "@/components/AiAnalyzingOverlay";
 import CaseReviewCard from "@/components/CaseReviewCard";
 import CaseResolvedBanner from "@/components/CaseResolvedBanner";
 import AuditTrailTimeline from "@/components/AuditTrailTimeline";
+import HeaderNav from "@/components/HeaderNav";
+import NotificationDrawer from "@/components/NotificationDrawer";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,6 +117,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [auditEvents, setAuditEvents] = useState<AuditEventSummary[]>([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
   const [resettingSeed, setResettingSeed] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // ── Load project & audit ──────────────────────────────────────────────────
   const loadAudit = useCallback(async () => {
@@ -314,38 +317,40 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <>
+      {/* Top Application Header Navigation */}
+      <HeaderNav
+        projectId={project.project_id}
+        onOpenNotifications={() => setIsNotificationOpen(true)}
+        onResetDemo={handleResetDemo}
+        isResetting={resettingSeed}
+      />
+
+      {/* Multi-Channel Authority Notification Drawer */}
+      <NotificationDrawer
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        onNotificationsChanged={loadAudit}
+      />
+
       {/* AI analyzing fullscreen overlay */}
       {analyzing && <AiAnalyzingOverlay />}
 
       <main className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto space-y-8 fade-in">
-
-        {/* ── Top Bar with Demo Controls ── */}
-        <header className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] uppercase tracking-widest">
-            <span className="text-[var(--accent)] font-bold">MPLADS AI Platform</span>
+        {/* Breadcrumb Bar */}
+        <div className="flex items-center justify-between flex-wrap gap-4 text-xs text-[var(--text-muted)]">
+          <div className="flex items-center gap-2 uppercase tracking-widest">
+            <span className="text-[var(--accent)] font-bold">Projects</span>
             <span className="text-[var(--border-strong)]">›</span>
-            <span>Projects</span>
-            <span className="text-[var(--border-strong)]">›</span>
-            <span className="text-[var(--text-primary)]">{project.project_id}</span>
+            <span className="text-[var(--text-primary)] font-mono">{project.project_id}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleResetDemo}
-              disabled={resettingSeed}
-              className="text-xs px-3 py-1.5 rounded-md bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-            >
-              <span>🔄</span>
-              <span>{resettingSeed ? "Resetting…" : "Reset Demo (Risk 32)"}</span>
-            </button>
-            <button
-              onClick={load}
-              className="text-xs px-3 py-1.5 rounded-md bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
-            >
-              ↻ Refresh
-            </button>
-          </div>
-        </header>
+          <button
+            onClick={load}
+            className="text-xs px-3 py-1.5 rounded-md bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
+          >
+            ↻ Refresh View
+          </button>
+        </div>
 
         {/* ── Case Resolved Banner (Shown after successful evidence submission) ── */}
         {resolvedEvidenceResult && (
