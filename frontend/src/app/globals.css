@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ──────────────────────────────────────────────────── */
+:root {
+  /* Surface */
+  --bg-base:        #0b0f1a;
+  --bg-surface:     #111827;
+  --bg-elevated:    #1a2133;
+  --bg-card:        #1e293b;
+
+  /* Brand */
+  --accent:         #3b82f6;
+  --accent-hover:   #60a5fa;
+  --accent-muted:   #1d3a6b;
+
+  /* Risk colour scale */
+  --risk-low:       #22c55e;   /* green  0-39  */
+  --risk-med:       #f59e0b;   /* amber 40-69  */
+  --risk-high:      #ef4444;   /* red  70-100  */
+
+  /* Status colours */
+  --held-bg:        #7c1d1d;
+  --held-text:      #fca5a5;
+  --approved-bg:    #14532d;
+  --approved-text:  #86efac;
+  --execution-bg:   #1e3a5f;
+  --execution-text: #93c5fd;
+
+  /* Text */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  /* Borders */
+  --border:         #1e293b;
+  --border-strong:  #334155;
+}
+
+@theme inline {
+  --color-background:   var(--bg-base);
+  --color-foreground:   var(--text-primary);
+  --font-sans:          var(--font-geist-sans);
+  --font-mono:          var(--font-geist-mono);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans, system-ui, sans-serif);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar            { width: 6px; height: 6px; }
+::-webkit-scrollbar-track      { background: var(--bg-base); }
+::-webkit-scrollbar-thumb      { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--text-muted); }
+
+/* ── Risk Badge Utility Classes ─────────────────────────────────────── */
+.risk-low  { color: var(--risk-low);  }
+.risk-med  { color: var(--risk-med);  }
+.risk-high { color: var(--risk-high); }
+
+/* ── Card ───────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+/* ── Pill / Badge ───────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pill-held       { background: var(--held-bg);       color: var(--held-text);      }
+.pill-approved   { background: var(--approved-bg);   color: var(--approved-text);  }
+.pill-execution  { background: var(--execution-bg);  color: var(--execution-text); }
+.pill-accent     { background: var(--accent-muted);  color: var(--accent-hover);   }
+
+/* ── Skeleton loader ────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-card)     50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+/* ── Pulse animation for risk score counter ─────────────────────────── */
+@keyframes risk-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.7; transform: scale(1.04); }
+}
+.risk-pulse { animation: risk-pulse 1.8s ease-in-out infinite; }
+
+/* ── Slide-in for alert banners ─────────────────────────────────────── */
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-down { animation: slide-down 0.35s ease; }
+
+/* ── Fade-in ────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in { animation: fade-in 0.4s ease; }
