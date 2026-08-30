@@ -47,47 +47,38 @@ export default function RecommendationForm({
   }
 
   return (
-    <div className="card bg-[var(--bg-elevated)] border-[var(--border-strong)] space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[var(--border)] pb-3">
+    <div className="card border-[#D5DCE5] bg-white shadow-xs space-y-4">
+      <div className="card-header flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xl">📋</span>
-          <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary)]">
-              MP Work Recommendation Proposal
-            </h2>
-            <p className="text-[11px] text-[var(--text-muted)]">
-              Pre-sanction AI screening for duplicate &amp; overlapping assets
-            </p>
-          </div>
+          <span className="text-base">📋</span>
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+            SUBMIT NEW MP WORK RECOMMENDATION FOR PRE-SANCTION SCREENING
+          </h3>
         </div>
 
-        {/* Demo Quick Presets */}
+        {/* Quick Test Presets */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => handlePreset(DUPLICATE_PRESET)}
-            className="text-[11px] px-2.5 py-1 rounded bg-red-950/40 border border-red-800/60 text-red-300 hover:bg-red-900/50 transition-colors"
+            className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] hover:bg-[#FEE2E2] cursor-pointer"
           >
-            ⚡ Demo: Duplicate Work
+            ⚡ Load Duplicate Demo Work
           </button>
           <button
             type="button"
             onClick={() => handlePreset(UNIQUE_PRESET)}
-            className="text-[11px] px-2.5 py-1 rounded bg-green-950/40 border border-green-800/60 text-green-300 hover:bg-green-900/50 transition-colors"
+            className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#F0FDF4] border border-[#86EFAC] text-[#166534] hover:bg-[#DCFCE7] cursor-pointer"
           >
-            ⚡ Demo: Unique Work
+            ⚡ Load Unique Demo Work
           </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Title */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="rec-title"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Proposed Work Title
+      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        <div className="space-y-1">
+          <label htmlFor="rec-title" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+            Proposed Developmental Work Title <span className="text-red-600">*</span>
           </label>
           <input
             id="rec-title"
@@ -95,18 +86,14 @@ export default function RecommendationForm({
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
-            className="w-full px-3 py-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+            className="w-full px-3 py-2 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-semibold focus:ring-1 focus:ring-[#123B6D]"
             placeholder="e.g. Construction of Community Drinking Water Facility"
           />
         </div>
 
-        {/* Description */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="rec-desc"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Detailed Specification &amp; Location
+        <div className="space-y-1">
+          <label htmlFor="rec-desc" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+            Detailed Technical Specification &amp; Location Scope <span className="text-red-600">*</span>
           </label>
           <textarea
             id="rec-desc"
@@ -114,25 +101,21 @@ export default function RecommendationForm({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             required
-            className="w-full p-3 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500 leading-relaxed font-sans"
-            placeholder="Provide exact physical scope, location/village, and technical details..."
+            className="w-full p-2.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] leading-relaxed focus:ring-1 focus:ring-[#123B6D]"
+            placeholder="Specify village, block, equipment, and structural requirements for NLP comparison..."
           />
         </div>
 
-        {/* Meta Row: Category, Constituency, Cost */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="rec-category"
-              className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-            >
-              Category
+          <div className="space-y-1">
+            <label htmlFor="rec-category" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+              Scheme Sector Category
             </label>
             <select
               id="rec-category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-medium focus:ring-1 focus:ring-[#123B6D]"
             >
               <option value="DRINKING_WATER">Drinking Water Facility</option>
               <option value="EDUCATION">Education &amp; Science</option>
@@ -142,12 +125,9 @@ export default function RecommendationForm({
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="rec-constituency"
-              className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-            >
-              Constituency
+          <div className="space-y-1">
+            <label htmlFor="rec-constituency" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+              Constituency (Lok Sabha)
             </label>
             <input
               id="rec-constituency"
@@ -155,16 +135,13 @@ export default function RecommendationForm({
               value={formData.constituency}
               onChange={(e) => setFormData({ ...formData, constituency: e.target.value })}
               required
-              className="w-full px-3 py-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-medium focus:ring-1 focus:ring-[#123B6D]"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="rec-cost"
-              className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-            >
-              Estimated Cost (₹)
+          <div className="space-y-1">
+            <label htmlFor="rec-cost" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+              Estimated Work Cost (INR)
             </label>
             <input
               id="rec-cost"
@@ -175,18 +152,17 @@ export default function RecommendationForm({
               }
               min={10000}
               required
-              className="w-full px-3 py-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-bold font-mono focus:ring-1 focus:ring-[#123B6D]"
             />
           </div>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white transition-all shadow-lg shadow-blue-950/40"
+          className="w-full py-2.5 rounded bg-[#123B6D] hover:bg-[#0A2240] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
         >
-          {loading ? "Running NLP Semantic Screen…" : "🔍 Run Pre-Sanction AI Duplicate Screening"}
+          {loading ? "Running Semantic Duplicate Screen…" : "Execute Pre-Sanction AI Duplicate Screening"}
         </button>
       </form>
     </div>

@@ -7,22 +7,19 @@ interface RiskBreakdownBarProps {
 }
 
 const LABELS: Record<string, string> = {
-  financial:   "Financial",
-  duplicate:   "Duplicate Evidence",
-  cv:          "Computer Vision",
-  timeline:    "Timeline",
-  compliance:  "Compliance",
+  financial:   "Financial Anomalies",
+  duplicate:   "Duplicate Evidence / Works",
+  cv:          "Physical Progress / CV",
+  timeline:    "Sanction Delay SLA",
+  compliance:  "Statutory SC/ST / Docs",
 };
 
 function getBarColor(score: number) {
-  if (score >= 70) return "bg-red-500";
-  if (score >= 40) return "bg-amber-400";
-  return "bg-green-500";
+  if (score >= 70) return "bg-[#B3261E]";
+  if (score >= 40) return "bg-[#D97706]";
+  return "bg-[#2E7D32]";
 }
 
-/**
- * Displays a breakdown of the composite risk score as horizontal bars.
- */
 export default function RiskBreakdownBar({ breakdown }: RiskBreakdownBarProps) {
   const entries = Object.entries(breakdown).filter(
     ([, v]) => typeof v === "number"
@@ -31,26 +28,26 @@ export default function RiskBreakdownBar({ breakdown }: RiskBreakdownBarProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="space-y-2 mt-4">
-      <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-        Risk Sub-scores
+    <div className="space-y-2 mt-3 pt-3 border-t border-[#E2E8F0]">
+      <p className="text-[10px] text-[#475569] uppercase tracking-wider font-bold">
+        Statutory Sub-Score Breakdown
       </p>
-      {entries.map(([key, score]) => (
-        <div key={key} className="flex items-center gap-3">
-          <span className="w-36 shrink-0 text-xs text-[var(--text-secondary)]">
-            {LABELS[key] ?? key}
-          </span>
-          <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${getBarColor(score)}`}
-              style={{ width: `${score}%` }}
-            />
+      <div className="space-y-2">
+        {entries.map(([key, score]) => (
+          <div key={key} className="space-y-0.5">
+            <div className="flex justify-between text-xs font-medium">
+              <span className="text-[#334155] text-[11px]">{LABELS[key] ?? key}</span>
+              <span className="font-mono font-bold text-[#0F172A] text-[11px]">{score}</span>
+            </div>
+            <div className="w-full h-1.5 rounded bg-[#E2E8F0] overflow-hidden">
+              <div
+                className={`h-full rounded transition-all duration-500 ${getBarColor(score)}`}
+                style={{ width: `${Math.min(score, 100)}%` }}
+              />
+            </div>
           </div>
-          <span className="w-8 text-right text-xs font-semibold tabular-nums text-[var(--text-secondary)]">
-            {score}
-          </span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

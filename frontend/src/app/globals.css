@@ -1,39 +1,57 @@
 @import "tailwindcss";
 
-/* ── Design Tokens ──────────────────────────────────────────────────── */
+/* ── Government of India / MoSPI Administrative Portal Design System ────── */
 :root {
-  /* Surface */
-  --bg-base:        #0b0f1a;
-  --bg-surface:     #111827;
-  --bg-elevated:    #1a2133;
-  --bg-card:        #1e293b;
+  /* Official Gov Palette */
+  --gov-navy:         #123B6D;
+  --gov-navy-dark:    #0A2240;
+  --gov-navy-light:   #1E4E8C;
+  --gov-saffron:      #E67E22;
+  --gov-saffron-dark: #C0392B;
+  --gov-green:        #2E7D32;
+  --gov-green-light:  #E8F5E9;
+  --gov-amber:        #B7791F;
+  --gov-amber-light:  #FEF3C7;
+  --gov-red:          #B3261E;
+  --gov-red-light:    #FEE2E2;
 
-  /* Brand */
-  --accent:         #3b82f6;
-  --accent-hover:   #60a5fa;
-  --accent-muted:   #1d3a6b;
+  /* Surfaces & Backgrounds */
+  --bg-base:          #F4F6F9;
+  --bg-surface:       #FFFFFF;
+  --bg-elevated:      #F8FAFC;
+  --bg-card:          #FFFFFF;
+  --bg-subtle:        #EDF2F7;
 
-  /* Risk colour scale */
-  --risk-low:       #22c55e;   /* green  0-39  */
-  --risk-med:       #f59e0b;   /* amber 40-69  */
-  --risk-high:      #ef4444;   /* red  70-100  */
+  /* Brand / Action */
+  --accent:           #123B6D;
+  --accent-hover:     #0A2240;
+  --accent-muted:     #E2E8F0;
 
-  /* Status colours */
-  --held-bg:        #7c1d1d;
-  --held-text:      #fca5a5;
-  --approved-bg:    #14532d;
-  --approved-text:  #86efac;
-  --execution-bg:   #1e3a5f;
-  --execution-text: #93c5fd;
+  /* Risk Colour Scale (Standard Administrative Contrast) */
+  --risk-low:         #2E7D32;   /* Green 0-39 */
+  --risk-med:         #D97706;   /* Amber 40-69 */
+  --risk-high:        #B3261E;   /* Red 70-100 */
 
-  /* Text */
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted:     #64748b;
+  /* Status Colors */
+  --held-bg:          #FEE2E2;
+  --held-text:        #991B1B;
+  --held-border:      #F87171;
+  --approved-bg:      #DCFCE7;
+  --approved-text:    #166534;
+  --approved-border:  #86EFAC;
+  --execution-bg:     #E0F2FE;
+  --execution-text:   #075985;
+  --execution-border: #7DD3FC;
 
-  /* Borders */
-  --border:         #1e293b;
-  --border-strong:  #334155;
+  /* High-Contrast Government Typography */
+  --text-primary:     #0F172A;
+  --text-secondary:   #334155;
+  --text-muted:       #64748B;
+
+  /* Borders & Rules */
+  --border:           #D5DCE5;
+  --border-strong:    #94A3B8;
+  --border-subtle:    #E2E8F0;
 }
 
 @theme inline {
@@ -48,51 +66,87 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html { color-scheme: dark; }
+html {
+  color-scheme: light;
+  font-size: 100%;
+}
 
 body {
   background: var(--bg-base);
   color: var(--text-primary);
-  font-family: var(--font-geist-sans, system-ui, sans-serif);
+  font-family: var(--font-geist-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────── */
-::-webkit-scrollbar            { width: 6px; height: 6px; }
-::-webkit-scrollbar-track      { background: var(--bg-base); }
-::-webkit-scrollbar-thumb      { background: var(--border-strong); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover{ background: var(--text-muted); }
+::-webkit-scrollbar            { width: 7px; height: 7px; }
+::-webkit-scrollbar-track      { background: #EDF2F7; }
+::-webkit-scrollbar-thumb      { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover{ background: #94A3B8; }
 
-/* ── Risk Badge Utility Classes ─────────────────────────────────────── */
-.risk-low  { color: var(--risk-low);  }
-.risk-med  { color: var(--risk-med);  }
-.risk-high { color: var(--risk-high); }
-
-/* ── Card ───────────────────────────────────────────────────────────── */
+/* ── Administrative Card ────────────────────────────────────────────── */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem;
 }
 
-/* ── Pill / Badge ───────────────────────────────────────────────────── */
+.card-header {
+  border-bottom: 1px solid var(--border);
+  background: #F8FAFC;
+  padding: 0.75rem 1rem;
+  margin: -1.25rem -1.25rem 1rem -1.25rem;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+/* ── Status Pills & Badges ─────────────────────────────────────────── */
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  border: 1px solid transparent;
 }
-.pill-held       { background: var(--held-bg);       color: var(--held-text);      }
-.pill-approved   { background: var(--approved-bg);   color: var(--approved-text);  }
-.pill-execution  { background: var(--execution-bg);  color: var(--execution-text); }
-.pill-accent     { background: var(--accent-muted);  color: var(--accent-hover);   }
+.pill-held       { background: var(--held-bg);       color: var(--held-text);      border-color: var(--held-border);      }
+.pill-approved   { background: var(--approved-bg);   color: var(--approved-text);  border-color: var(--approved-border);  }
+.pill-execution  { background: var(--execution-bg);  color: var(--execution-text); border-color: var(--execution-border); }
+.pill-accent     { background: #EFF6FF;              color: #1D4ED8;              border-color: #BFDBFE;                 }
+.pill-warning    { background: var(--gov-amber-light); color: #92400E;           border-color: #FCD34D;                 }
+
+/* ── Government MIS Table Styles ────────────────────────────────────── */
+.gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+}
+.gov-table th {
+  background: #F1F5F9;
+  color: #1E293B;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 2px solid #CBD5E1;
+  text-align: left;
+}
+.gov-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #E2E8F0;
+  color: #1E293B;
+}
+.gov-table tr:hover td {
+  background: #F8FAFC;
+}
 
 /* ── Skeleton loader ────────────────────────────────────────────────── */
 @keyframes shimmer {
@@ -102,32 +156,24 @@ body {
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--bg-elevated) 25%,
-    var(--bg-card)     50%,
-    var(--bg-elevated) 75%
+    #E2E8F0 25%,
+    #F1F5F9 50%,
+    #E2E8F0 75%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease infinite;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
-/* ── Pulse animation for risk score counter ─────────────────────────── */
-@keyframes risk-pulse {
-  0%, 100% { opacity: 1;   transform: scale(1);    }
-  50%       { opacity: 0.7; transform: scale(1.04); }
-}
-.risk-pulse { animation: risk-pulse 1.8s ease-in-out infinite; }
-
-/* ── Slide-in for alert banners ─────────────────────────────────────── */
+/* ── Administrative Transitions ─────────────────────────────────────── */
+.slide-down { animation: slide-down 0.25s ease-out; }
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.slide-down { animation: slide-down 0.35s ease; }
 
-/* ── Fade-in ────────────────────────────────────────────────────────── */
+.fade-in { animation: fade-in 0.25s ease-out; }
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.fade-in { animation: fade-in 0.4s ease; }

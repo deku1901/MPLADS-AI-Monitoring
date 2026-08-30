@@ -316,4 +316,163 @@ export interface SplitWorkScanResponse {
   clusters: SplitWorkCluster[];
 }
 
+// ---------------------------------------------------------------------------
+// Satellite Remote Sensing (Slice 5A)
+// ---------------------------------------------------------------------------
+
+export interface SatellitePassMetadata {
+  pass_id: string;
+  date: string;
+  cloud_cover_pct: number;
+  resolution_m: number;
+  ndbi_score: number;
+  ndvi_score: number;
+  spectral_band: string;
+  sensor: string;
+}
+
+export interface SatelliteAnalysisResponse {
+  project_id: string;
+  project_title: string;
+  category: string;
+  constituency: string;
+  coordinates: {
+    lat: number;
+    lon: number;
+  };
+  baseline_pass: SatellitePassMetadata;
+  current_pass: SatellitePassMetadata;
+  structural_change_score: number;
+  ai_estimated_progress_pct: number;
+  reported_progress_pct: number;
+  mismatch_pct: number;
+  is_mismatch: bool | boolean;
+  confidence_score: number;
+  resolution_meters: number;
+  sensor: string;
+  analysis_summary: string;
+}
+
+export interface SatelliteVerificationResponse {
+  project_id: string;
+  verified: boolean;
+  is_mismatch: boolean;
+  reported_progress_pct: number;
+  ai_estimated_progress_pct: number;
+  mismatch_pct: number;
+  previous_risk_score: number;
+  updated_risk_score: number;
+  risk_breakdown: RiskBreakdown;
+  new_project_status: string;
+  case_id: string | null;
+  inspection_triggered: boolean;
+  action_taken: string;
+}
+
+// ---------------------------------------------------------------------------
+// Delay & Stalled Project Detection (Slice 5B / F12)
+// ---------------------------------------------------------------------------
+
+export interface DelayAnalysisResponse {
+  project_id: string;
+  project_title: string;
+  sanction_date: string;
+  expected_completion_date: string;
+  elapsed_days: number;
+  elapsed_pct: number;
+  expected_progress_pct: number;
+  actual_progress_pct: number;
+  progress_gap_pct: number;
+  days_since_last_progress: number;
+  delay_status: string;
+  risk_level: string;
+  recommended_action: string;
+  analysis_summary: string;
+}
+
+export interface DelayScanResponse {
+  project_id: string;
+  delay_status: string;
+  risk_level: string;
+  progress_gap_pct: number;
+  expected_progress_pct: number;
+  actual_progress_pct: number;
+  days_since_last_progress: number;
+  elapsed_days: number;
+  elapsed_pct: number;
+  previous_risk_score: number;
+  updated_risk_score: number;
+  risk_breakdown: RiskBreakdown;
+  old_project_status: string;
+  new_project_status: string;
+  case_id: string | null;
+  inspection_triggered: boolean;
+  action_taken: string;
+  recommended_action: string;
+  analysis_summary: string;
+}
+
+// ---------------------------------------------------------------------------
+// Financial & Expenditure Analytics (Slice 6 / F13)
+// ---------------------------------------------------------------------------
+
+export interface PaymentInstallmentItem {
+  payment_id: string;
+  requested_amount_inr: number;
+  request_date: string | null;
+  status: string;
+  submitted_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+}
+
+export interface FinancialAnalysisResponse {
+  project_id: string;
+  project_title: string;
+  recommended_amount_inr: number;
+  sanctioned_amount_inr: number;
+  cost_variance_inr: number;
+  cost_variance_pct: number;
+  total_released_inr: number;
+  total_pending_inr: number;
+  unreleased_balance_inr: number;
+  fund_utilization_pct: number;
+  expenditure_to_progress_ratio: number;
+  anomaly_score: number;
+  financial_risk_flags: string[];
+  financial_health_rating: string;
+  recommended_action: string;
+  analysis_summary: string;
+  payment_count: number;
+  payments: PaymentInstallmentItem[];
+}
+
+export interface FinancialScanResponse {
+  project_id: string;
+  cost_variance_inr: number;
+  cost_variance_pct: number;
+  recommended_amount_inr: number;
+  sanctioned_amount_inr: number;
+  total_released_inr: number;
+  total_pending_inr: number;
+  unreleased_balance_inr: number;
+  fund_utilization_pct: number;
+  expenditure_to_progress_ratio: number;
+  financial_health_rating: string;
+  financial_risk_flags: string[];
+  anomaly_score: number;
+  previous_risk_score: number;
+  updated_risk_score: number;
+  risk_breakdown: RiskBreakdown;
+  old_project_status: string;
+  new_project_status: string;
+  case_id: string | null;
+  inspection_triggered: boolean;
+  action_taken: string;
+  recommended_action: string;
+  analysis_summary: string;
+  payments: PaymentInstallmentItem[];
+}
+
+
 

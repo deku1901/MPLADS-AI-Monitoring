@@ -65,19 +65,14 @@ export default function CitizenReportForm({
   }
 
   return (
-    <div className="card bg-[var(--bg-surface)] border-2 border-blue-500/50 shadow-2xl space-y-5 slide-down">
+    <div className="card border-[#123B6D] bg-white shadow-md space-y-4 slide-down">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[var(--border)] pb-3">
+      <div className="card-header flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xl">📢</span>
-          <div>
-            <h3 className="text-sm font-bold text-[var(--text-primary)]">
-              Submit Citizen Ground-Truth Verification
-            </h3>
-            <p className="text-[11px] text-[var(--text-muted)]">
-              Asset: <span className="font-mono text-slate-200">{project.project_id}</span> — {project.title}
-            </p>
-          </div>
+          <span className="text-base">📢</span>
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+            SUBMIT CITIZEN GROUND-TRUTH VERIFICATION REPORT
+          </h3>
         </div>
 
         {/* Quick Presets */}
@@ -85,68 +80,69 @@ export default function CitizenReportForm({
           <button
             type="button"
             onClick={loadPositivePreset}
-            className="text-[11px] px-2.5 py-1 rounded bg-green-950/40 border border-green-800/60 text-green-300 hover:bg-green-900/50 transition-colors"
+            className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#F0FDF4] border border-[#86EFAC] text-[#166534] hover:bg-[#DCFCE7] cursor-pointer"
           >
-            👍 Preset: Functional
+            👍 Demo: Functional Asset
           </button>
           <button
             type="button"
             onClick={loadNegativePreset}
-            className="text-[11px] px-2.5 py-1 rounded bg-red-950/40 border border-red-800/60 text-red-300 hover:bg-red-900/50 transition-colors"
+            className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] hover:bg-[#FEE2E2] cursor-pointer"
           >
-            👎 Preset: Broken / Non-Functional
+            👎 Demo: Broken / Non-Functional (Triggers Inspection)
           </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Functionality Choice */}
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-            Is this MPLADS asset operational &amp; accessible?
+      <div className="text-xs text-[#334155] bg-[#F8FAFC] p-2.5 rounded border border-[#E2E8F0]">
+        <strong>Verifying Asset:</strong> <span className="font-mono font-bold text-[#123B6D]">{project.project_id}</span> — {project.title}
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        {/* Functionality Choice Buttons */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+            1. Physical Operational Status <span className="text-red-600">*</span>
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setIsFunctional(true)}
-              className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
+              className={`p-3 rounded border text-left flex items-center gap-3 transition-colors cursor-pointer ${
                 isFunctional
-                  ? "border-green-500 bg-green-950/40 text-green-200 shadow-md shadow-green-950/30 ring-1 ring-green-500"
-                  : "border-[var(--border-strong)] bg-[var(--bg-base)] text-slate-400 hover:border-slate-600"
+                  ? "border-[#15803D] bg-[#F0FDF4] text-[#166534] ring-1 ring-[#15803D]"
+                  : "border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC]"
               }`}
             >
-              <span className="text-2xl">✅</span>
+              <span className="text-xl">✅</span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider">YES — Fully Functional</p>
-                <p className="text-[11px] opacity-80 mt-0.5">Asset is operating and accessible to the public.</p>
+                <p className="text-xs font-bold uppercase">YES — FULLY FUNCTIONAL</p>
+                <p className="text-[11px] text-[#475569]">Asset exists, is in working order, and serves the public.</p>
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => setIsFunctional(false)}
-              className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
+              className={`p-3 rounded border text-left flex items-center gap-3 transition-colors cursor-pointer ${
                 !isFunctional
-                  ? "border-red-500 bg-red-950/40 text-red-200 shadow-md shadow-red-950/30 ring-1 ring-red-500"
-                  : "border-[var(--border-strong)] bg-[var(--bg-base)] text-slate-400 hover:border-slate-600"
+                  ? "border-[#B3261E] bg-[#FEF2F2] text-[#991B1B] ring-1 ring-[#B3261E]"
+                  : "border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC]"
               }`}
             >
-              <span className="text-2xl">❌</span>
+              <span className="text-xl">❌</span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider">NO — Broken / Not Working</p>
-                <p className="text-[11px] opacity-80 mt-0.5">Facility is damaged, non-operational, or locked.</p>
+                <p className="text-xs font-bold uppercase">NO — DEFECTIVE / MISSING</p>
+                <p className="text-[11px] text-[#475569]">Asset is damaged, missing, locked, or not functioning.</p>
               </div>
             </button>
           </div>
         </div>
 
-        {/* Narrative Description */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="citizen-desc"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Ground-Truth Observations
+        {/* Narrative */}
+        <div className="space-y-1">
+          <label htmlFor="citizen-desc" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+            2. Detailed Citizen Ground-Truth Observations <span className="text-red-600">*</span>
           </label>
           <textarea
             id="citizen-desc"
@@ -154,47 +150,43 @@ export default function CitizenReportForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
-            className="w-full p-3 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
-            placeholder="Describe what you observed on site..."
+            className="w-full p-2.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] leading-relaxed focus:ring-1 focus:ring-[#123B6D]"
+            placeholder="Describe condition, date of visit, and community usage..."
           />
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Detailed descriptions (+0.5 credibility) help prioritize official inspections.
+          <p className="text-[11px] text-[#64748B]">
+            Detailed description narrative (+0.5 credibility points).
           </p>
         </div>
 
         {/* Photo Upload */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="citizen-photo"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Attach Ground-Truth Site Photo (+1.5 Credibility)
+        <div className="space-y-1">
+          <label htmlFor="citizen-photo" className="text-xs font-bold text-[#334155] uppercase tracking-wide">
+            3. On-Site Photograph (+1.5 Credibility Points)
           </label>
-          <label
-            htmlFor="citizen-photo"
-            className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-              photoFile
-                ? "border-green-600/60 bg-green-950/20"
-                : "border-[var(--border-strong)] bg-[var(--bg-base)] hover:border-blue-500"
-            }`}
-          >
-            <span className="text-lg">{photoFile ? "📸" : "📎"}</span>
-            <span className="text-sm text-[var(--text-secondary)] truncate">
-              {photoFile ? photoFile.name : "Attach photo of asset (JPEG/PNG)"}
-            </span>
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor="citizen-photo"
+              className={`flex-1 flex items-center justify-between px-3 py-1.5 rounded border cursor-pointer text-xs ${
+                photoFile
+                  ? "border-[#86EFAC] bg-[#F0FDF4] text-[#166534]"
+                  : "border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC]"
+              }`}
+            >
+              <span>{photoFile ? `📸 ${photoFile.name}` : "Attach on-site camera photograph (JPEG/PNG)..."}</span>
+              <span className="px-2 py-0.5 rounded bg-[#E2E8F0] text-[#1E293B] font-bold text-[10px]">
+                Browse
+              </span>
+            </label>
             {photoFile && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPhotoFile(null);
-                }}
-                className="ml-auto text-xs text-[var(--text-muted)] hover:text-red-400"
+                onClick={() => setPhotoFile(null)}
+                className="text-xs text-red-600 hover:underline cursor-pointer"
               >
-                ✕
+                Clear
               </button>
             )}
-          </label>
+          </div>
           <input
             id="citizen-photo"
             type="file"
@@ -207,11 +199,8 @@ export default function CitizenReportForm({
         {/* GPS Coordinates */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label
-              htmlFor="citizen-lat"
-              className="text-[11px] font-semibold text-[var(--text-muted)] uppercase"
-            >
-              Citizen Latitude
+            <label htmlFor="citizen-lat" className="text-[11px] font-bold text-[#334155] uppercase">
+              4. GPS Latitude (Geotag)
             </label>
             <input
               id="citizen-lat"
@@ -219,16 +208,13 @@ export default function CitizenReportForm({
               step="0.0001"
               value={lat ?? ""}
               onChange={(e) => setLat(Number(e.target.value))}
-              className="w-full px-3 py-2 rounded bg-[var(--bg-base)] border border-[var(--border-strong)] text-xs font-mono text-slate-200"
+              className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs font-mono text-[#0F172A]"
             />
           </div>
 
           <div className="space-y-1">
-            <label
-              htmlFor="citizen-lon"
-              className="text-[11px] font-semibold text-[var(--text-muted)] uppercase"
-            >
-              Citizen Longitude
+            <label htmlFor="citizen-lon" className="text-[11px] font-bold text-[#334155] uppercase">
+              GPS Longitude (Geotag)
             </label>
             <input
               id="citizen-lon"
@@ -236,24 +222,24 @@ export default function CitizenReportForm({
               step="0.0001"
               value={lon ?? ""}
               onChange={(e) => setLon(Number(e.target.value))}
-              className="w-full px-3 py-2 rounded bg-[var(--bg-base)] border border-[var(--border-strong)] text-xs font-mono text-slate-200"
+              className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs font-mono text-[#0F172A]"
             />
           </div>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-950/50 border border-red-800 px-4 py-2.5 text-xs text-red-300">
-            <span className="font-semibold text-red-400">Error:</span> {error}
+          <div className="p-2.5 rounded bg-[#FEE2E2] border border-[#FCA5A5] text-xs text-[#991B1B]">
+            <strong>Error:</strong> {error}
           </div>
         )}
 
-        {/* Actions */}
+        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-2">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-colors"
+              className="px-3 py-1.5 rounded text-xs font-bold text-[#64748B] hover:bg-[#F1F5F9] cursor-pointer"
             >
               Cancel
             </button>
@@ -262,13 +248,13 @@ export default function CitizenReportForm({
           <button
             type="submit"
             disabled={submitting}
-            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-md ${
+            className={`px-5 py-2 rounded font-bold text-xs uppercase tracking-wider text-white transition-colors cursor-pointer shadow-xs ${
               isFunctional
-                ? "bg-green-600 hover:bg-green-500 text-white shadow-green-950/40"
-                : "bg-red-600 hover:bg-red-500 text-white shadow-red-950/40"
-            } disabled:opacity-60 disabled:cursor-not-allowed`}
+                ? "bg-[#15803D] hover:bg-[#166534]"
+                : "bg-[#B3261E] hover:bg-[#991B1B]"
+            } disabled:opacity-60`}
           >
-            {submitting ? "Submitting Verification…" : "Submit Ground-Truth Report"}
+            {submitting ? "Transmitting Report…" : "Submit Ground-Truth Verification"}
           </button>
         </div>
       </form>

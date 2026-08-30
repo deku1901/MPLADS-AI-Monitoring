@@ -470,3 +470,173 @@ def trigger_split_work_scan(
         raise HTTPException(status_code=500, detail=f"Split-work enforcement failed: {e}")
 
 
+# ---------------------------------------------------------------------------
+# Satellite Remote Sensing Endpoints (Slice 5A)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/satellite/projects/{project_id}/analysis",
+    response_model=schemas.SatelliteAnalysisResponse,
+    tags=["Satellite"],
+)
+def get_project_satellite_analysis(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve deterministic Sentinel-2 multi-temporal change detection analysis.
+    Compares baseline T0 vs current T1 optical passes, computing NDBI, NDVI,
+    and estimated physical progress.
+    """
+    try:
+        from services.satellite import get_satellite_analysis
+        res = get_satellite_analysis(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Satellite analysis failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Satellite analysis failed: {e}")
+
+
+@app.post(
+    "/api/satellite/projects/{project_id}/verify",
+    response_model=schemas.SatelliteVerificationResponse,
+    tags=["Satellite"],
+)
+def verify_project_satellite_progress(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute AI remote sensing verification.
+    - Records satellite evidence
+    - Recalculates risk with progress mismatch detector (D6)
+    - If mismatch > 20%: escalates status to INSPECTION_REQUIRED,
+      creates CASE-SAT-{suffix}, and alerts DA and MoSPI.
+    """
+    try:
+        from services.satellite import verify_satellite_progress
+        res = verify_satellite_progress(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Satellite verification failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Satellite verification failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Delay & Stalled Project Detection Endpoints (Slice 5B / F12)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/delay/projects/{project_id}/analysis",
+    response_model=schemas.DelayAnalysisResponse,
+    tags=["Delay"],
+)
+def get_project_delay_analysis(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve deterministic delay analysis for a project.
+    Compares elapsed timeline, expected progress, and actual progress
+    to classify delay severity.
+    """
+    try:
+        from services.delay import get_delay_analysis
+        res = get_delay_analysis(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Delay analysis failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Delay analysis failed: {e}")
+
+
+@app.post(
+    "/api/delay/projects/{project_id}/scan",
+    response_model=schemas.DelayScanResponse,
+    tags=["Delay"],
+)
+def scan_project_delay(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute project delay detection scan.
+    - Analyzes project lifecycle trajectory
+    - Recalculates risk with delay signals
+    - If PROJECT_STALLED or SEVERE_DELAY with risk >= 70: creates CASE-DELAY-{suffix}
+    - Dispatches DA notification
+    - Idempotent: repeated scans do not duplicate open cases
+    """
+    try:
+        from services.delay import scan_project_delay as _scan
+        res = _scan(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Delay scan failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Delay scan failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Financial & Expenditure Analytics Endpoints (Slice 6 / F13)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/financial/projects/{project_id}/analysis",
+    response_model=schemas.FinancialAnalysisResponse,
+    tags=["Financial"],
+)
+def get_project_financial_analysis(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve project financial allocations, cost variance, installment history,
+    fund utilization %, and expenditure anomaly indicators.
+    """
+    try:
+        from services.financial import get_financial_analysis
+        res = get_financial_analysis(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Financial analysis failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Financial analysis failed: {e}")
+
+
+@app.post(
+    "/api/financial/projects/{project_id}/scan",
+    response_model=schemas.FinancialScanResponse,
+    tags=["Financial"],
+)
+def scan_project_financials(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute financial anomaly detection scan on a project.
+    - Evaluates fiscal allocations, cost variance, and disbursement pace
+    - Recalculates unified risk score
+    - Escalates to INSPECTION_REQUIRED with CASE-FIN-{suffix} on critical anomalies
+    - Dispatches DA notification and writes audit trail
+    - Idempotent: repeated scans do not duplicate open cases
+    """
+    try:
+        from services.financial import scan_project_financials as _scan_fin
+        res = _scan_fin(db, project_id=project_id)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Financial scan failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Financial scan failed: {e}")
+
+
+

@@ -8,136 +8,97 @@ interface InterventionBannerProps {
   onDismiss?: () => void;
 }
 
-const REASON_LABELS: Record<string, { label: string; icon: string }> = {
-  COST_VARIANCE:       { label: "Cost Variance",        icon: "💰" },
-  PHOTO_DUPLICATE:     { label: "Photo Duplicate",      icon: "🖼️" },
-  PROGRESS_MISMATCH:   { label: "Progress Mismatch",    icon: "📊" },
-  SANCTION_DELAY:      { label: "Sanction Delay",       icon: "⏱️" },
-  DOCUMENT_GAP:        { label: "Document Gap",         icon: "📄" },
-  AMOUNT_ANOMALY:      { label: "Amount Anomaly",       icon: "⚠️" },
-  ML_ANOMALY:          { label: "ML Anomaly Detected",  icon: "🤖" },
-  MISSING_COMPLETION:  { label: "Missing Completion Date", icon: "📅" },
+const REASON_LABELS: Record<string, string> = {
+  COST_VARIANCE:       "Cost Variance Exceeds Benchmark",
+  PHOTO_DUPLICATE:     "Duplicate Evidence Photo (pHash Match)",
+  PROGRESS_MISMATCH:   "Progress Mismatch (Reported vs AI Evidence)",
+  SANCTION_DELAY:      "Statutory Sanction Delay (>45 Days)",
+  DOCUMENT_GAP:        "Missing Mandatory Estimate / Sanction Docs",
+  AMOUNT_ANOMALY:      "Financial Discrepancy Flag",
+  ML_ANOMALY:          "IsolationForest Financial Outlier",
+  MISSING_COMPLETION:  "Unspecified Completion Target",
 };
 
-function ReasonTag({ code }: { code: string }) {
-  const { label, icon } = REASON_LABELS[code] ?? { label: code, icon: "🔴" };
-  return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-950/60 text-red-300 border border-red-800/50">
-      {icon} {label}
-    </span>
-  );
-}
-
-/**
- * Shown after POST /api/payments returns a high-risk / held result.
- * Displays data directly from the backend response — nothing is hardcoded.
- */
 export default function InterventionBanner({
   result,
   previousRisk,
   onDismiss,
 }: InterventionBannerProps) {
-  const isHeld = result.status === "HELD_FOR_REVIEW";
-
   return (
-    <div className="slide-down rounded-xl overflow-hidden border border-red-700/60 shadow-2xl shadow-red-950/40">
-
-      {/* ── Header stripe ── */}
-      <div className="bg-red-900/70 px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🚨</span>
+    <div className="rounded-md border border-[#F87171] bg-[#FEF2F2] shadow-xs slide-down overflow-hidden">
+      {/* Header */}
+      <div className="bg-[#B3261E] text-white px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🚨</span>
           <div>
-            <p className="text-sm font-bold text-red-200 uppercase tracking-wide">
-              Financial Firebreak Activated
+            <p className="text-xs font-bold uppercase tracking-wider">
+              STATUTORY FINANCIAL FIREBREAK ACTIVATED — TRANCHE HELD
             </p>
-            <p className="text-xs text-red-400 mt-0.5">
-              AI detected high-risk indicators — automatic intervention triggered
+            <p className="text-[10px] text-red-100">
+              Automated compliance check failed: High risk score ({result.risk_score}/100) triggered statutory intervention
             </p>
           </div>
         </div>
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="text-red-400 hover:text-red-200 text-xs transition-colors ml-auto"
-            aria-label="Dismiss"
+            className="text-xs text-red-200 hover:text-white underline cursor-pointer"
           >
-            ✕ dismiss
+            Dismiss Alert
           </button>
         )}
       </div>
 
-      {/* ── Body ── */}
-      <div className="bg-red-950/30 px-5 py-5 space-y-5">
-
-        {/* Risk transition row */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-3">
-            {/* Previous risk */}
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-400 tabular-nums">{previousRisk}</p>
-              <p className="text-[10px] text-green-600 uppercase tracking-wider">Before</p>
-            </div>
-
-            {/* Arrow + label */}
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="text-2xl text-red-400">→</div>
-              <p className="text-[9px] text-red-500 uppercase tracking-widest font-semibold">Risk</p>
-            </div>
-
-            {/* New risk */}
-            <div className="text-center">
-              <p className="text-3xl font-bold text-red-400 tabular-nums risk-pulse">
-                {result.risk_score}
-              </p>
-              <p className="text-[10px] text-red-500 uppercase tracking-wider">After</p>
+      {/* Details Row */}
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded border border-[#FECACA] text-xs">
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Risk Escalation</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-mono font-bold text-[#15803D]">{previousRisk}</span>
+              <span className="text-[#94A3B8]">→</span>
+              <span className="font-mono font-black text-[#B3261E] text-sm">{result.risk_score} / 100</span>
             </div>
           </div>
 
-          {/* Vertical divider */}
-          <div className="hidden md:block w-px h-12 bg-red-800/50" />
-
-          {/* Payment status */}
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">Payment Status</p>
-            <span className={`pill ${isHeld ? "pill-held" : "pill-accent"} text-sm px-4 py-1`}>
-              {result.status.replace(/_/g, " ")}
-            </span>
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Payment Status</span>
+            <div className="mt-0.5">
+              <span className="pill pill-held">{result.status.replace(/_/g, " ")}</span>
+            </div>
           </div>
 
-          {/* Vertical divider */}
-          <div className="hidden md:block w-px h-12 bg-red-800/50" />
-
-          {/* Case ID */}
-          {result.case_id && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">Case Created</p>
-              <p className="font-mono text-sm font-bold text-amber-300">{result.case_id}</p>
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Assigned Case</span>
+            <div className="mt-0.5">
+              <span className="font-mono font-bold text-[#123B6D]">{result.case_id || "CASE-1042"}</span>
+              <span className="text-[11px] text-[#64748B] ml-1.5">(District Authority)</span>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Anomaly reason tags */}
+        {/* Flagged reasons */}
         {result.reason_codes.length > 0 && (
-          <div>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-2">
-              Anomaly Flags
-            </p>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide">
+              Flagged Statutory Violations:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
               {result.reason_codes.map((code) => (
-                <ReasonTag key={code} code={code} />
+                <span
+                  key={code}
+                  className="px-2 py-0.5 rounded bg-white text-[#991B1B] border border-[#FCA5A5] text-[11px] font-semibold"
+                >
+                  ⚠️ {REASON_LABELS[code] || code}
+                </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Action summary */}
-        <div className="rounded-lg bg-black/30 px-4 py-3 border border-red-900/40">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">System Action</p>
-          <p className="text-sm text-[var(--text-secondary)]">
-            {result.action || "Payment held pending authority review and evidence submission."}
-          </p>
+        <div className="p-2.5 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#334155]">
+          <strong>Next Action:</strong> District Authority must review technical estimate and upload field verification evidence in the Case Review panel below to resolve.
         </div>
-
       </div>
     </div>
   );

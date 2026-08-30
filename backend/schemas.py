@@ -336,4 +336,160 @@ class SplitWorkScanResponse(BaseModel):
     clusters: list[SplitWorkCluster]
 
 
+# ---------------------------------------------------------------------------
+# Satellite Remote Sensing Schemas (Slice 5A)
+# ---------------------------------------------------------------------------
+
+class SatellitePassMetadata(BaseModel):
+    pass_id: str
+    date: str
+    cloud_cover_pct: float
+    resolution_m: float
+    ndbi_score: float
+    ndvi_score: float
+    spectral_band: str
+    sensor: str
+
+
+class SatelliteAnalysisResponse(BaseModel):
+    project_id: str
+    project_title: str
+    category: str
+    constituency: str
+    coordinates: dict[str, float]
+    baseline_pass: SatellitePassMetadata
+    current_pass: SatellitePassMetadata
+    structural_change_score: float
+    ai_estimated_progress_pct: int
+    reported_progress_pct: int
+    mismatch_pct: int
+    is_mismatch: bool
+    confidence_score: float
+    resolution_meters: float
+    sensor: str
+    analysis_summary: str
+
+
+class SatelliteVerificationResponse(BaseModel):
+    project_id: str
+    verified: bool
+    is_mismatch: bool
+    reported_progress_pct: int
+    ai_estimated_progress_pct: int
+    mismatch_pct: int
+    previous_risk_score: int
+    updated_risk_score: int
+    risk_breakdown: dict[str, Any]
+    new_project_status: str
+    case_id: str | None
+    inspection_triggered: bool
+    action_taken: str
+
+
+# ---------------------------------------------------------------------------
+# Delay & Stalled Project Detection Schemas (Slice 5B / F12)
+# ---------------------------------------------------------------------------
+
+class DelayAnalysisResponse(BaseModel):
+    project_id: str
+    project_title: str
+    sanction_date: str
+    expected_completion_date: str
+    elapsed_days: int
+    elapsed_pct: float
+    expected_progress_pct: float
+    actual_progress_pct: int
+    progress_gap_pct: float
+    days_since_last_progress: int
+    delay_status: str
+    risk_level: str
+    recommended_action: str
+    analysis_summary: str
+
+
+class DelayScanResponse(BaseModel):
+    project_id: str
+    delay_status: str
+    risk_level: str
+    progress_gap_pct: float
+    expected_progress_pct: float
+    actual_progress_pct: int
+    days_since_last_progress: int
+    elapsed_days: int
+    elapsed_pct: float
+    previous_risk_score: int
+    updated_risk_score: int
+    risk_breakdown: dict[str, Any]
+    old_project_status: str
+    new_project_status: str
+    case_id: str | None
+    inspection_triggered: bool
+    action_taken: str
+    recommended_action: str
+    analysis_summary: str
+
+
+# ---------------------------------------------------------------------------
+# Financial & Expenditure Analytics Schemas (Slice 6 / F13)
+# ---------------------------------------------------------------------------
+
+class PaymentInstallmentItem(BaseModel):
+    payment_id: str
+    requested_amount_inr: int
+    request_date: str | None = None
+    status: str
+    submitted_by: str | None = None
+    approved_by: str | None = None
+    approved_at: str | None = None
+
+
+class FinancialAnalysisResponse(BaseModel):
+    project_id: str
+    project_title: str
+    recommended_amount_inr: int
+    sanctioned_amount_inr: int
+    cost_variance_inr: int
+    cost_variance_pct: float
+    total_released_inr: int
+    total_pending_inr: int
+    unreleased_balance_inr: int
+    fund_utilization_pct: float
+    expenditure_to_progress_ratio: float
+    anomaly_score: float
+    financial_risk_flags: list[str]
+    financial_health_rating: str
+    recommended_action: str
+    analysis_summary: str
+    payment_count: int
+    payments: list[PaymentInstallmentItem] = []
+
+
+class FinancialScanResponse(BaseModel):
+    project_id: str
+    cost_variance_inr: int
+    cost_variance_pct: float
+    recommended_amount_inr: int
+    sanctioned_amount_inr: int
+    total_released_inr: int
+    total_pending_inr: int
+    unreleased_balance_inr: int
+    fund_utilization_pct: float
+    expenditure_to_progress_ratio: float
+    financial_health_rating: str
+    financial_risk_flags: list[str]
+    anomaly_score: float
+    previous_risk_score: int
+    updated_risk_score: int
+    risk_breakdown: dict[str, Any]
+    old_project_status: str
+    new_project_status: str
+    case_id: str | None
+    inspection_triggered: bool
+    action_taken: str
+    recommended_action: str
+    analysis_summary: str
+    payments: list[PaymentInstallmentItem] = []
+
+
+
 

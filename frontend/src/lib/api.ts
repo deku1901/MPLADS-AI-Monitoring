@@ -22,6 +22,12 @@ import type {
   CitizenReportDetail,
   SplitWorkCluster,
   SplitWorkScanResponse,
+  SatelliteAnalysisResponse,
+  SatelliteVerificationResponse,
+  DelayAnalysisResponse,
+  DelayScanResponse,
+  FinancialAnalysisResponse,
+  FinancialScanResponse,
 } from "./types";
 
 
@@ -296,5 +302,60 @@ export async function triggerSplitWorkScan(constituency?: string): Promise<Split
     body: JSON.stringify({ constituency: constituency ?? null }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Satellite Remote Sensing (Slice 5A)
+// ---------------------------------------------------------------------------
+
+export async function getSatelliteAnalysis(
+  projectId: string
+): Promise<SatelliteAnalysisResponse> {
+  return request<SatelliteAnalysisResponse>(`/api/satellite/projects/${projectId}/analysis`);
+}
+
+export async function verifySatelliteProgress(
+  projectId: string
+): Promise<SatelliteVerificationResponse> {
+  return request<SatelliteVerificationResponse>(`/api/satellite/projects/${projectId}/verify`, {
+    method: "POST",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Delay & Stalled Project Detection (Slice 5B / F12)
+// ---------------------------------------------------------------------------
+
+export async function getDelayAnalysis(
+  projectId: string
+): Promise<DelayAnalysisResponse> {
+  return request<DelayAnalysisResponse>(`/api/delay/projects/${projectId}/analysis`);
+}
+
+export async function scanProjectDelay(
+  projectId: string
+): Promise<DelayScanResponse> {
+  return request<DelayScanResponse>(`/api/delay/projects/${projectId}/scan`, {
+    method: "POST",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Financial & Expenditure Analytics (Slice 6 / F13)
+// ---------------------------------------------------------------------------
+
+export async function getFinancialAnalysis(
+  projectId: string
+): Promise<FinancialAnalysisResponse> {
+  return request<FinancialAnalysisResponse>(`/api/financial/projects/${projectId}/analysis`);
+}
+
+export async function scanProjectFinancials(
+  projectId: string
+): Promise<FinancialScanResponse> {
+  return request<FinancialScanResponse>(`/api/financial/projects/${projectId}/scan`, {
+    method: "POST",
+  });
+}
+
 
 

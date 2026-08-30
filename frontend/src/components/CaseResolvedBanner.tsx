@@ -12,92 +12,63 @@ export default function CaseResolvedBanner({
   onDismiss,
 }: CaseResolvedBannerProps) {
   return (
-    <div className="slide-down rounded-xl overflow-hidden border border-green-600/60 shadow-2xl shadow-green-950/40">
-      {/* ── Top Header Stripe ── */}
-      <div className="bg-green-900/70 px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">✅</span>
+    <div className="rounded-md border border-[#86EFAC] bg-[#F0FDF4] shadow-xs slide-down overflow-hidden">
+      {/* Header */}
+      <div className="bg-[#15803D] text-white px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-base">✅</span>
           <div>
-            <p className="text-sm font-bold text-green-200 uppercase tracking-wide">
-              Case Successfully Resolved — Financial Firebreak Lifted
+            <p className="text-xs font-bold uppercase tracking-wider">
+              CASE RESOLVED — STATUTORY FIREBREAK LIFTED &amp; PAYMENT RELEASED
             </p>
-            <p className="text-xs text-green-300 mt-0.5">
-              Authority evidence verified by AI · Risk reduced below threshold · Held payment released
+            <p className="text-[10px] text-green-100">
+              Authority justification accepted by AI Decision Engine • Risk score decreased to {result.risk_after}/100 • Tranche authorized
             </p>
           </div>
         </div>
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="text-green-400 hover:text-green-200 text-xs transition-colors ml-auto"
-            aria-label="Dismiss"
+            className="text-xs text-green-200 hover:text-white underline cursor-pointer"
           >
-            ✕ dismiss
+            Dismiss
           </button>
         )}
       </div>
 
-      {/* ── Body ── */}
-      <div className="bg-green-950/30 px-5 py-5 space-y-4">
-        {/* Risk Transition Metrics */}
-        <div className="flex flex-wrap items-center gap-6">
-          {/* Risk Score Drop */}
-          <div className="flex items-center gap-3">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-red-400 tabular-nums">
-                {result.risk_before}
-              </p>
-              <p className="text-[10px] text-red-400 uppercase tracking-wider">Before</p>
-            </div>
-
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="text-2xl text-green-400">→</div>
-              <p className="text-[9px] text-green-400 uppercase tracking-widest font-semibold">
-                Risk
-              </p>
-            </div>
-
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-400 tabular-nums">
-                {result.risk_after}
-              </p>
-              <p className="text-[10px] text-green-400 uppercase tracking-wider">After</p>
+      <div className="p-4 space-y-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded border border-[#BBF7D0]">
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Risk Re-Evaluation</span>
+            <div className="flex items-center gap-2 mt-0.5 font-mono">
+              <span className="text-[#B3261E] font-bold">{result.risk_before}</span>
+              <span className="text-[#94A3B8]">→</span>
+              <span className="text-[#15803D] font-black text-sm">{result.risk_after} / 100</span>
             </div>
           </div>
 
-          <div className="hidden md:block w-px h-12 bg-green-800/50" />
-
-          {/* Case Status Pill */}
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">
-              Case Status
-            </p>
-            <span className="pill pill-approved text-sm px-4 py-1">
-              {result.case_status.replace(/_/g, " ")}
-            </span>
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Case Status</span>
+            <div className="mt-0.5">
+              <span className="pill pill-approved">{result.case_status}</span>
+            </div>
           </div>
 
-          <div className="hidden md:block w-px h-12 bg-green-800/50" />
-
-          {/* Payment Status Pill */}
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">
-              Payment Action
-            </p>
-            <span className="pill pill-approved text-sm px-4 py-1">
-              APPROVED FOR REVIEW (RELEASED)
-            </span>
+          <div>
+            <span className="text-[10px] font-bold text-[#64748B] uppercase">Disbursement Action</span>
+            <div className="mt-0.5">
+              <span className="pill pill-approved">APPROVED_FOR_REVIEW</span>
+            </div>
           </div>
         </div>
 
-        {/* AI LLM Summary Callout */}
         {result.llm_summary && (
-          <div className="rounded-lg bg-black/40 px-4 py-3 border border-green-800/40 space-y-1">
-            <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">
-              🤖 AI Evidence Verification Summary
+          <div className="p-3 rounded bg-white border border-[#BBF7D0]">
+            <p className="text-[10px] font-bold text-[#15803D] uppercase tracking-wide mb-0.5">
+              AI Evidence Verification Record:
             </p>
-            <p className="text-sm text-slate-200 leading-relaxed">
-              {result.llm_summary}
+            <p className="text-[#1E293B] italic leading-relaxed">
+              &quot;{result.llm_summary}&quot;
             </p>
           </div>
         )}

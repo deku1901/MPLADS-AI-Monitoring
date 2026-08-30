@@ -19,8 +19,7 @@ import CaseResolvedBanner from "@/components/CaseResolvedBanner";
 import AuditTrailTimeline from "@/components/AuditTrailTimeline";
 import HeaderNav from "@/components/HeaderNav";
 import NotificationDrawer from "@/components/NotificationDrawer";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
+import GovernmentFooter from "@/components/GovernmentFooter";
 
 function fmt(n: number | null | undefined): string {
   if (n == null) return "—";
@@ -48,6 +47,7 @@ function StatusPill({ status }: { status: string }) {
     APPROVED_FOR_REVIEW: "pill pill-approved",
     PAYMENT_RELEASED: "pill pill-approved",
     SUBMITTED:        "pill pill-accent",
+    INSPECTION_REQUIRED: "pill pill-held",
   };
   return (
     <span className={cls[status] ?? "pill pill-accent"}>
@@ -56,62 +56,32 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-function ProjectSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="skeleton h-8 w-2/3 rounded" />
-      <div className="skeleton h-4 w-1/3 rounded" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="card space-y-3">
-            <div className="skeleton h-3 w-1/2 rounded" />
-            <div className="skeleton h-6 w-3/4 rounded" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Info Row ──────────────────────────────────────────────────────────────────
-
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between items-start py-2 border-b border-[var(--border)] last:border-0">
-      <span className="text-xs text-[var(--text-muted)] uppercase tracking-wide">
+    <div className="flex justify-between items-start py-2 border-b border-[#E2E8F0] last:border-0 text-xs">
+      <span className="text-[#64748B] font-semibold uppercase tracking-wider text-[10px]">
         {label}
       </span>
-      <span className="text-sm text-[var(--text-primary)] font-medium text-right max-w-[60%]">
+      <span className="text-[#0F172A] font-bold text-right max-w-[65%]">
         {value}
       </span>
     </div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
-
-interface ProjectPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function ProjectPage({ params }: ProjectPageProps) {
+export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
-  // ── Project state ─────────────────────────────────────────────────────────
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // ── F2: Payment / AI result state ─────────────────────────────────────────
   const [paymentResult, setPaymentResult] = useState<PaymentSubmitResponse | null>(null);
   const [prevRisk, setPrevRisk] = useState<number>(0);
   const [analyzing, setAnalyzing] = useState(false);
   const [displayRisk, setDisplayRisk] = useState<number | null>(null);
   const [displayBreakdown, setDisplayBreakdown] = useState<Record<string, number> | null>(null);
 
-  // ── F3: Case & Evidence State ─────────────────────────────────────────────
   const [activeCase, setActiveCase] = useState<CaseDetail | null>(null);
   const [resolvedEvidenceResult, setResolvedEvidenceResult] = useState<EvidenceSubmitResponse | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEventSummary[]>([]);
@@ -119,14 +89,13 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [resettingSeed, setResettingSeed] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-  // ── Load project & audit ──────────────────────────────────────────────────
   const loadAudit = useCallback(async () => {
     setLoadingAudit(true);
     try {
       const events = await getProjectAudit(id);
       setAuditEvents(events);
     } catch {
-      // Audit fail non-critical
+      // non-critical
     } finally {
       setLoadingAudit(false);
     }
@@ -137,7 +106,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       const c = await getCase(caseId);
       setActiveCase(c);
     } catch {
-      // Case load non-critical
+      // non-critical
     }
   }, []);
 
@@ -156,7 +125,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         setDisplayBreakdown(bd);
       }
 
-      // Check if project already has a held payment with an auto-created case
       const suffix = id.split("-").pop();
       if (suffix) {
         loadCase(`CASE-${suffix}`);
@@ -204,7 +172,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     };
   }, [id, loadCase, loadAudit]);
 
-  // ── F2: After successful payment: update display state from backend ──────
   function handlePaymentSuccess(result: PaymentSubmitResponse, capturedPrevRisk: number) {
     setPaymentResult(result);
     setPrevRisk(capturedPrevRisk);
@@ -217,26 +184,20 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       setDisplayBreakdown(bd);
     }
 
-    // Load newly created case from backend
     if (result.case_id) {
       loadCase(result.case_id);
     }
-
-    // Refresh project details & audit trail
     load();
   }
 
-  // ── F3: After successful evidence submission ──────────────────────────────
   async function handleEvidenceSubmitted(res: EvidenceSubmitResponse) {
     setAnalyzing(false);
     if (res.case_status === "RESOLVED") {
       setResolvedEvidenceResult(res);
     }
 
-    // Update risk score from backend response
     setDisplayRisk(res.risk_after);
 
-    // Refresh case details, project state, and audit log
     if (activeCase) {
       await loadCase(activeCase.case_id);
     }
@@ -252,7 +213,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     await loadAudit();
   }
 
-  // ── Reset demo to clean seed state ────────────────────────────────────────
   async function handleResetDemo() {
     if (resettingSeed) return;
     setResettingSeed(true);
@@ -269,46 +229,51 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     }
   }
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading && !project) {
     return (
-      <main className="min-h-screen p-8">
-        <div className="mb-8 flex items-center gap-3 text-xs text-[var(--text-muted)] uppercase tracking-widest">
-          <span className="text-[var(--accent)] font-bold">MPLADS AI Platform</span>
-          <span className="text-[var(--border-strong)]">›</span>
-          <span>{id}</span>
-        </div>
-        <ProjectSkeleton />
-      </main>
+      <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
+        <HeaderNav
+          projectId={id}
+          onOpenNotifications={() => setIsNotificationOpen(true)}
+          onResetDemo={handleResetDemo}
+          isResetting={resettingSeed}
+        />
+        <main className="max-w-7xl mx-auto p-8 w-full space-y-6">
+          <div className="skeleton h-8 w-1/3 rounded" />
+          <div className="skeleton h-40 w-full rounded" />
+        </main>
+        <GovernmentFooter />
+      </div>
     );
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
   if (loadError || !project) {
     return (
-      <main className="min-h-screen p-8 flex items-center justify-center">
-        <div className="card max-w-md w-full text-center space-y-4">
-          <div className="text-4xl">⚠️</div>
-          <h2 className="text-lg font-semibold text-red-400">Failed to load project</h2>
-          <p className="text-sm text-[var(--text-secondary)]">{loadError ?? "Project not found."}</p>
-          <p className="text-xs text-[var(--text-muted)]">
-            Make sure the backend is running on{" "}
-            <code className="bg-[var(--bg-elevated)] px-1.5 py-0.5 rounded text-[var(--accent-hover)]">
-              http://localhost:8000
-            </code>
-          </p>
-          <button
-            onClick={load}
-            className="mt-2 px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </main>
+      <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
+        <HeaderNav
+          projectId={id}
+          onOpenNotifications={() => setIsNotificationOpen(true)}
+          onResetDemo={handleResetDemo}
+          isResetting={resettingSeed}
+        />
+        <main className="max-w-xl mx-auto p-8 my-auto w-full">
+          <div className="card text-center space-y-3 border-[#FCA5A5] bg-[#FEF2F2]">
+            <span className="text-3xl">⚠️</span>
+            <h2 className="text-sm font-bold text-[#991B1B]">Failed to Retrieve Work Details</h2>
+            <p className="text-xs text-[#64748B]">{loadError ?? "Work record not found in central registry."}</p>
+            <button
+              onClick={load}
+              className="px-4 py-1.5 rounded bg-[#123B6D] text-white text-xs font-bold uppercase tracking-wider"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+        <GovernmentFooter />
+      </div>
     );
   }
 
-  // ── Derived display values ────────────────────────────────────────────────
   const shownRisk      = displayRisk ?? project.risk_score;
   const shownBreakdown = displayBreakdown ?? project.risk_breakdown ?? {};
   const isHighRisk     = shownRisk >= 70;
@@ -316,8 +281,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const isHeld         = (paymentResult?.status === "HELD_FOR_REVIEW") || hasHeldPayment;
 
   return (
-    <>
-      {/* Top Application Header Navigation */}
+    <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
       <HeaderNav
         projectId={project.project_id}
         onOpenNotifications={() => setIsNotificationOpen(true)}
@@ -325,197 +289,204 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         isResetting={resettingSeed}
       />
 
-      {/* Multi-Channel Authority Notification Drawer */}
       <NotificationDrawer
         isOpen={isNotificationOpen}
         onClose={() => setIsNotificationOpen(false)}
         onNotificationsChanged={loadAudit}
       />
 
-      {/* AI analyzing fullscreen overlay */}
       {analyzing && <AiAnalyzingOverlay />}
 
-      <main className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto space-y-8 fade-in">
-        {/* Breadcrumb Bar */}
-        <div className="flex items-center justify-between flex-wrap gap-4 text-xs text-[var(--text-muted)]">
-          <div className="flex items-center gap-2 uppercase tracking-widest">
-            <span className="text-[var(--accent)] font-bold">Projects</span>
-            <span className="text-[var(--border-strong)]">›</span>
-            <span className="text-[var(--text-primary)] font-mono">{project.project_id}</span>
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 w-full space-y-6 fade-in flex-1">
+        {/* Breadcrumb & Sub-Bar */}
+        <div className="flex items-center justify-between flex-wrap gap-2 text-xs pb-2 border-b border-[#D5DCE5]">
+          <div className="flex items-center gap-1.5 font-medium text-[#475569]">
+            <span className="text-[#123B6D] font-bold">Dashboard</span>
+            <span>&gt;</span>
+            <span className="text-[#123B6D] font-bold">Works MIS</span>
+            <span>&gt;</span>
+            <span className="font-mono text-[#0F172A] font-bold">{project.project_id}</span>
           </div>
 
-          <button
-            onClick={load}
-            className="text-xs px-3 py-1.5 rounded-md bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
-          >
-            ↻ Refresh View
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-[#64748B]">State: Uttar Pradesh | District: Varanasi</span>
+            <button
+              onClick={load}
+              className="text-[11px] font-bold px-2.5 py-1 rounded bg-white border border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC] cursor-pointer"
+            >
+              ↻ Refresh MIS View
+            </button>
+          </div>
         </div>
 
-        {/* ── Case Resolved Banner (Shown after successful evidence submission) ── */}
+        {/* Resolved Banner */}
         {resolvedEvidenceResult && (
-          <section>
-            <CaseResolvedBanner
-              result={resolvedEvidenceResult}
-              onDismiss={() => setResolvedEvidenceResult(null)}
-            />
-          </section>
+          <CaseResolvedBanner
+            result={resolvedEvidenceResult}
+            onDismiss={() => setResolvedEvidenceResult(null)}
+          />
         )}
 
-        {/* ── Intervention Banner (appears after payment hold, hidden once resolved) ── */}
+        {/* Intervention Banner */}
         {paymentResult && isHeld && !resolvedEvidenceResult && (
-          <section>
-            <InterventionBanner
-              result={paymentResult}
-              previousRisk={prevRisk}
-              onDismiss={() => setPaymentResult(null)}
-            />
-          </section>
+          <InterventionBanner
+            result={paymentResult}
+            previousRisk={prevRisk}
+            onDismiss={() => setPaymentResult(null)}
+          />
         )}
 
-        {/* ── Project Header ── */}
-        <section>
-          <div className="flex flex-wrap items-start gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] leading-tight">
-              {project.title}
-            </h1>
-            <StatusPill status={project.status} />
-            {isHeld && !resolvedEvidenceResult && <StatusPill status="HELD_FOR_REVIEW" />}
-            {resolvedEvidenceResult && <StatusPill status="APPROVED_FOR_REVIEW" />}
-          </div>
-          {project.description && (
-            <p className="mt-2 text-sm text-[var(--text-secondary)] max-w-3xl leading-relaxed">
-              {project.description}
-            </p>
-          )}
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-[var(--text-muted)]">
-            {project.constituency && (
-              <span>📍 {project.constituency}{project.state ? `, ${project.state}` : ""}</span>
-            )}
-            {project.category    && <span>🏷 {project.category}</span>}
-            {project.implementing_agency && <span>🏗 {project.implementing_agency}</span>}
-          </div>
-        </section>
-
-        {/* ── Risk + Budget + Timeline grid ── */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* Risk Score Card */}
-          <div
-            className={`card flex flex-col items-center justify-center gap-4 py-8 transition-all duration-700 ${
-              isHighRisk ? "border-red-700/60 shadow-lg shadow-red-950/30" : ""
-            }`}
-          >
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-              AI Risk Score
-            </p>
-            <RiskBadge score={shownRisk} size="lg" pulse={isHighRisk} />
-
-            {paymentResult && (
-              <p className="text-xs text-[var(--text-muted)]">
-                Initial:{" "}
-                <span className="text-green-400 font-semibold">{prevRisk || 32}</span>
-                {resolvedEvidenceResult && (
-                  <>
-                    {" → Peak: "}
-                    <span className="text-red-400 font-semibold">{paymentResult.risk_score}</span>
-                    {" → Current: "}
-                    <span className="text-green-400 font-semibold">{shownRisk}</span>
-                  </>
-                )}
-              </p>
-            )}
-
-            {shownBreakdown && Object.keys(shownBreakdown).length > 0 && (
-              <div className="w-full">
-                <RiskBreakdownBar breakdown={shownBreakdown} />
+        {/* Project Administrative Header Card */}
+        <section className="card bg-white border-[#D5DCE5]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono text-sm font-extrabold text-[#123B6D] bg-[#EFF6FF] px-2 py-0.5 rounded border border-[#BFDBFE]">
+                  {project.project_id}
+                </span>
+                <StatusPill status={project.status} />
+                {isHeld && !resolvedEvidenceResult && <StatusPill status="HELD_FOR_REVIEW" />}
+                {resolvedEvidenceResult && <StatusPill status="APPROVED_FOR_REVIEW" />}
               </div>
-            )}
-          </div>
+              <h1 className="text-xl md:text-2xl font-extrabold text-[#0A2240] tracking-tight">
+                {project.title}
+              </h1>
+            </div>
 
-          {/* Budget Card */}
-          <div className="card space-y-1">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-3">
-              Budget
-            </p>
-            <InfoRow label="Recommended" value={fmt(project.recommended_amount_inr)} />
-            <InfoRow label="Sanctioned"  value={fmt(project.sanctioned_amount_inr)} />
-            {project.latest_progress && (
-              <InfoRow
-                label="Reported Progress"
-                value={`${project.latest_progress.reported_pct}%`}
-              />
-            )}
-            {project.missing_documents && project.missing_documents.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                <p className="text-xs text-amber-400 font-semibold mb-1.5 uppercase tracking-wide">
-                  ⚠ Missing Documents
+            {/* Quick KPI pills */}
+            <div className="flex items-center gap-4 bg-[#F8FAFC] p-3 rounded border border-[#E2E8F0] text-xs">
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold">Sanctioned Cost</span>
+                <p className="text-sm font-bold text-[#0F172A] font-mono">{fmt(project.sanctioned_amount_inr)}</p>
+              </div>
+              <div className="w-px h-8 bg-[#CBD5E1]" />
+              <div>
+                <span className="text-[10px] text-[#64748B] uppercase font-bold">Physical Milestone</span>
+                <p className="text-sm font-bold text-[#0F172A] font-mono">
+                  {project.latest_progress?.reported_pct ?? 0}%
                 </p>
-                <ul className="space-y-1">
-                  {project.missing_documents.map((doc) => (
-                    <li key={doc} className="text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
-                      {doc}
-                    </li>
-                  ))}
-                </ul>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Timeline Card */}
-          <div className="card space-y-1">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-3">
-              Timeline
-            </p>
-            <InfoRow label="Recommended On"    value={fmtDate(project.recommendation_date)} />
-            <InfoRow label="Sanctioned On"     value={fmtDate(project.sanction_date)} />
-            <InfoRow label="Target Completion" value={fmtDate(project.completion_date)} />
-            <InfoRow label="Mandatory Tender"  value={project.mandatory_tender ? "Yes" : "No"} />
-            <InfoRow label="Last Updated"      value={fmtDate(project.updated_at)} />
+          <div className="pt-3 text-xs text-[#334155] grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <strong className="text-[#64748B]">Location:</strong> {project.location_text || "Varanasi, UP"}
+            </div>
+            <div>
+              <strong className="text-[#64748B]">Category:</strong> {project.category || "DRINKING_WATER"}
+            </div>
+            <div>
+              <strong className="text-[#64748B]">Implementing Agency:</strong> {project.implementing_agency || "DRDA"}
+            </div>
           </div>
         </section>
 
-        {/* ── Payment History ── */}
+        {/* 3-Column MIS Info Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* AI Decision Support & Risk Card */}
+          <div className="card bg-white border-[#D5DCE5] flex flex-col justify-between">
+            <div className="card-header">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+                AI STATUTORY RISK ASSESSMENT
+              </h3>
+            </div>
+            <div className="flex flex-col items-center justify-center my-2">
+              <RiskBadge score={shownRisk} size="md" pulse={isHighRisk} />
+            </div>
+            {shownBreakdown && Object.keys(shownBreakdown).length > 0 && (
+              <RiskBreakdownBar breakdown={shownBreakdown} />
+            )}
+          </div>
+
+          {/* Financial & Compliance MIS */}
+          <div className="card bg-white border-[#D5DCE5]">
+            <div className="card-header">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+                FINANCIAL ALLOCATION &amp; SANCTION
+              </h3>
+            </div>
+            <div className="space-y-1">
+              <InfoRow label="Recommended Amount" value={fmt(project.recommended_amount_inr)} />
+              <InfoRow label="Sanctioned Amount"  value={fmt(project.sanctioned_amount_inr)} />
+              <InfoRow
+                label="Cost Variance"
+                value={
+                  project.recommended_amount_inr && project.sanctioned_amount_inr
+                    ? `+${(((project.sanctioned_amount_inr - project.recommended_amount_inr) / project.recommended_amount_inr) * 100).toFixed(1)}%`
+                    : "0%"
+                }
+              />
+              <InfoRow label="Mandatory Public E-Tender" value={project.mandatory_tender ? "Mandatory (Enforced)" : "Exempt (< ₹10L)"} />
+              {project.missing_documents && project.missing_documents.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-[#E2E8F0]">
+                  <span className="text-[10px] font-bold text-[#B45309] uppercase">Missing Mandatory Documents:</span>
+                  <ul className="mt-1 space-y-0.5 text-xs text-[#991B1B]">
+                    {project.missing_documents.map((d) => (
+                      <li key={d}>• {d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Statutory Milestone Dates */}
+          <div className="card bg-white border-[#D5DCE5]">
+            <div className="card-header">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+                STATUTORY TIMELINE &amp; SLA
+              </h3>
+            </div>
+            <div className="space-y-1">
+              <InfoRow label="Recommendation Date" value={fmtDate(project.recommendation_date)} />
+              <InfoRow label="Sanction Order Date" value={fmtDate(project.sanction_date)} />
+              <InfoRow label="Target Completion" value={fmtDate(project.completion_date)} />
+              <InfoRow label="Last MIS Synchronization" value={fmtDate(project.updated_at)} />
+              <InfoRow label="Assigned Parliamentary MP" value="Shri R. K. Singh (Lok Sabha, Varanasi)" />
+            </div>
+          </div>
+        </section>
+
+        {/* Tranche Disbursement History Table */}
         {project.payments.length > 0 && (
-          <section className="card">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-4">
-              Payment History & Release Audit
-            </p>
+          <section className="card bg-white border-[#D5DCE5]">
+            <div className="card-header flex items-center justify-between">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+                DISBURSEMENT &amp; TRANCHE RELEASE AUDIT LOG
+              </h3>
+              <span className="text-[11px] text-[#64748B]">Total Tranches: {project.payments.length}</span>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="gov-table">
                 <thead>
-                  <tr className="text-xs text-[var(--text-muted)] uppercase tracking-wide border-b border-[var(--border)]">
-                    <th className="text-left py-2 pr-4">Payment ID</th>
-                    <th className="text-left py-2 pr-4">Amount</th>
-                    <th className="text-left py-2 pr-4">Date</th>
-                    <th className="text-left py-2 pr-4">Status</th>
-                    <th className="text-right py-2">AI Risk</th>
+                  <tr>
+                    <th>Payment ID</th>
+                    <th>Claimed Amount</th>
+                    <th>Submission Date</th>
+                    <th>Statutory Status</th>
+                    <th className="text-right">Risk at Request</th>
                   </tr>
                 </thead>
                 <tbody>
                   {project.payments.map((p) => (
-                    <tr key={p.payment_id} className="border-b border-[var(--border)] last:border-0">
-                      <td className="py-2.5 pr-4 font-mono text-xs text-[var(--text-muted)]">
-                        {p.payment_id}
-                      </td>
-                      <td className="py-2.5 pr-4 font-semibold">{fmt(p.requested_amount_inr)}</td>
-                      <td className="py-2.5 pr-4 text-[var(--text-secondary)]">{fmtDate(p.request_date)}</td>
-                      <td className="py-2.5 pr-4">
-                        <StatusPill status={p.status} />
-                      </td>
-                      <td className="py-2.5 text-right">
+                    <tr key={p.payment_id}>
+                      <td className="font-mono font-bold text-[11px] text-[#123B6D]">{p.payment_id}</td>
+                      <td className="font-bold text-xs">{fmt(p.requested_amount_inr)}</td>
+                      <td className="text-xs text-[#475569]">{fmtDate(p.request_date)}</td>
+                      <td><StatusPill status={p.status} /></td>
+                      <td className="text-right font-mono font-bold">
                         {p.ai_risk_score_at_request != null ? (
                           <span
-                            className={`font-bold tabular-nums ${
+                            className={
                               p.ai_risk_score_at_request >= 70
-                                ? "text-red-400"
+                                ? "text-[#B3261E]"
                                 : p.ai_risk_score_at_request >= 40
-                                ? "text-amber-400"
-                                : "text-green-400"
-                            }`}
+                                ? "text-[#B45309]"
+                                : "text-[#15803D]"
+                            }
                           >
-                            {p.ai_risk_score_at_request}
+                            {p.ai_risk_score_at_request} / 100
                           </span>
                         ) : "—"}
                       </td>
@@ -527,8 +498,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </section>
         )}
 
-        {/* ── F2: Payment Submission Panel ── */}
-        {/* Only show when there is no active held payment */}
+        {/* Payment Submission Panel (Only if no held payment active) */}
         {!isHeld && !activeCase && (
           <section>
             <PaymentPanel
@@ -540,7 +510,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </section>
         )}
 
-        {/* ── F3: Case Review & Authority Evidence Submission ── */}
+        {/* Case Review Card (When case active) */}
         {activeCase && (
           <section>
             <CaseReviewCard
@@ -551,7 +521,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </section>
         )}
 
-        {/* ── F3: Immutable Chronological Audit Trail ── */}
+        {/* Audit Trail Section */}
         <section>
           <AuditTrailTimeline
             events={auditEvents}
@@ -559,8 +529,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             onRefresh={loadAudit}
           />
         </section>
-
       </main>
-    </>
+
+      <GovernmentFooter />
+    </div>
   );
 }

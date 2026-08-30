@@ -7,10 +7,7 @@ import SplitWorkClusterCard from "@/components/SplitWorkClusterCard";
 import UnifiedTenderBanner from "@/components/UnifiedTenderBanner";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import HeaderNav from "@/components/HeaderNav";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+import GovernmentFooter from "@/components/GovernmentFooter";
 
 const DEMO_PROJECT_ID = "MPL-2026-1042";
 
@@ -32,26 +29,22 @@ function SummaryCard({
   accent?: "red" | "amber" | "blue" | "green";
 }) {
   const colorMap = {
-    red: "text-red-400",
-    amber: "text-amber-400",
-    blue: "text-blue-400",
-    green: "text-emerald-400",
+    red: "text-[#B3261E]",
+    amber: "text-[#B45309]",
+    blue: "text-[#123B6D]",
+    green: "text-[#15803D]",
   };
-  const col = accent ? colorMap[accent] : "text-[var(--text-primary)]";
+  const col = accent ? colorMap[accent] : "text-[#0F172A]";
   return (
-    <div className="card flex flex-col gap-1">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+    <div className="card bg-white border-[#CBD5E1] p-3.5 space-y-1">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
         {label}
       </div>
-      <div className={`text-2xl font-bold font-mono ${col}`}>{value}</div>
-      {sub && <div className="text-[11px] text-[var(--text-muted)]">{sub}</div>}
+      <div className={`text-xl font-black font-mono ${col}`}>{value}</div>
+      {sub && <div className="text-[11px] text-[#64748B]">{sub}</div>}
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 export default function SplitWorkPage() {
   const [clusters, setClusters] = useState<SplitWorkCluster[]>([]);
@@ -91,14 +84,12 @@ export default function SplitWorkPage() {
     }
   }
 
-  // When a cluster is enforced, patch it in-place in state
   function handleEnforced(clusterId: string, updated: SplitWorkCluster) {
     setClusters((prev) =>
       prev.map((c) => (c.cluster_id === clusterId ? updated : c))
     );
   }
 
-  // Derived stats
   const totalAffectedProjects = clusters.reduce(
     (acc, c) => acc + c.member_projects.length,
     0
@@ -112,7 +103,7 @@ export default function SplitWorkPage() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
+    <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
       <HeaderNav
         projectId={DEMO_PROJECT_ID}
         onOpenNotifications={() => setNotifOpen(true)}
@@ -121,151 +112,118 @@ export default function SplitWorkPage() {
       />
 
       <NotificationDrawer
-        open={notifOpen}
+        isOpen={notifOpen}
         onClose={() => setNotifOpen(false)}
       />
 
-      {/* ── Page Header ── */}
-      <div className="border-b border-[var(--border-strong)] bg-[var(--bg-surface)]">
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-8">
-          <div className="flex items-start gap-4">
-            {/* Icon */}
-            <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-amber-900/30 border border-amber-700/50 flex items-center justify-center text-2xl shadow-inner">
-              🔍
-            </div>
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 w-full space-y-6 fade-in flex-1">
+        {/* Breadcrumb Header */}
+        <div className="flex items-center justify-between flex-wrap gap-2 text-xs pb-2 border-b border-[#D5DCE5]">
+          <div className="flex items-center gap-1.5 font-medium text-[#475569]">
+            <span className="text-[#123B6D] font-bold">Dashboard</span>
+            <span>&gt;</span>
+            <span className="text-[#123B6D] font-bold">Procurement Compliance</span>
+            <span>&gt;</span>
+            <span className="font-bold text-[#0F172A]">Split-Work Anomaly &amp; E-Tender Enforcement</span>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="pill pill-held text-[10px]">⚠ ANOMALY DETECTION</span>
-                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
-                  Vertical Slice 4 — Split-Work NLP
-                </span>
+          <span className="px-2 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] border border-[#FCD34D] text-[11px] font-mono font-bold">
+            Slice 4: Geospatial Clustering + NLP
+          </span>
+        </div>
+
+        {/* Overview Banner */}
+        <section className="card bg-white border-[#D5DCE5]">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <span className="text-2xl">🧩</span>
+              <div className="space-y-1">
+                <h1 className="text-base md:text-lg font-bold text-[#0A2240] uppercase tracking-wide">
+                  SPLIT-WORK PROCUREMENT INTEGRITY &amp; TENDER MONITORING MODULE
+                </h1>
+                <p className="text-xs text-[#475569] leading-relaxed max-w-3xl">
+                  Under MPLADS procurement rules, works with an aggregate cost exceeding ₹10 Lakh mandate public e-tendering.
+                  The AI engine continuously inspects sanctioned works to identify artificial contract fragmentation (multiple
+                  sub-₹5L orders on a single physical reach or corridor). Enforcing a unified tender consolidates fragmented work
+                  orders into a single, compliant public procurement package.
+                </p>
               </div>
-              <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight mb-2">
-                Split-Work Anomaly Detection
-              </h1>
-              <p className="text-sm text-[var(--text-secondary)] max-w-2xl leading-relaxed">
-                The AI engine analyses all active MPLADS work orders geographically and semantically.
-                When multiple work orders share a corridor, location, and category — and are individually
-                priced below the ₹5L direct-quotation ceiling while the aggregate exceeds ₹10L — the
-                system flags them as potential artificial procurement splitting designed to evade mandatory
-                public e-tendering requirements.
-              </p>
             </div>
 
-            {/* Rescan button */}
             <button
               onClick={load}
               disabled={loading}
               id="btn-rescan"
-              className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-elevated)] hover:bg-[var(--bg-card)] border border-[var(--border-strong)] text-xs font-semibold text-[var(--text-secondary)] hover:text-white transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-xs font-bold text-[#0A2240] hover:bg-[#E2E8F0] transition-colors cursor-pointer shrink-0"
             >
-              {loading ? (
-                <span className="w-3.5 h-3.5 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
-              ) : (
-                <span>🔄</span>
-              )}
-              {loading ? "Scanning…" : "Refresh"}
+              {loading ? "Scanning…" : "↻ Refresh Anomaly Scan"}
             </button>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="max-w-5xl mx-auto px-6 md:px-10 py-8">
-        {/* ── Summary Cards ── */}
+        {/* Summary KPI Grid */}
         {!loading && !error && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <SummaryCard
               label="Detected Clusters"
               value={clusters.length}
-              sub={clusters.length === 1 ? "corridor group" : "corridor groups"}
+              sub={clusters.length === 1 ? "1 corridor group" : `${clusters.length} corridor groups`}
               accent="amber"
             />
             <SummaryCard
               label="Affected Work Orders"
               value={totalAffectedProjects}
-              sub="fragmented works"
+              sub="fragmented work orders"
               accent={totalAffectedProjects > 0 ? "red" : "green"}
             />
             <SummaryCard
-              label="Aggregate Value"
+              label="Consolidated Tender Value"
               value={totalAggregateValue > 0 ? formatInr(totalAggregateValue) : "₹0"}
-              sub="consolidated tender"
+              sub="merged package value"
               accent={totalAggregateValue >= 10_00_000 ? "red" : "amber"}
             />
             <SummaryCard
-              label="Tender Anomalies"
-              value={tenantAnomalies}
-              sub="exceed ₹10L threshold"
+              label="Statutory Threshold"
+              value={tenantAnomalies > 0 ? "EXCEEDED" : "COMPLIANT"}
+              sub="₹10.00L mandatory ceiling"
               accent={tenantAnomalies > 0 ? "red" : "green"}
             />
           </div>
         )}
 
-        {/* ── Loading State ── */}
+        {/* Loading */}
         {loading && (
-          <div className="flex flex-col gap-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="card">
-                <div className="skeleton h-6 w-2/3 mb-4 rounded" />
-                <div className="skeleton h-4 w-full mb-2 rounded" />
-                <div className="skeleton h-4 w-4/5 rounded" />
-              </div>
-            ))}
+          <div className="space-y-4">
+            <div className="skeleton h-32 w-full rounded" />
+            <div className="skeleton h-32 w-full rounded" />
           </div>
         )}
 
-        {/* ── Error State ── */}
+        {/* Error */}
         {!loading && error && (
-          <div className="card border-red-800/50 bg-red-950/20 slide-down">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">⚠</span>
-              <div>
-                <h3 className="font-bold text-red-300 mb-1">Failed to Load Anomaly Data</h3>
-                <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-                <button
-                  onClick={load}
-                  className="mt-3 px-4 py-1.5 rounded-lg bg-red-900/30 hover:bg-red-900/50 border border-red-800/50 text-red-300 text-xs font-semibold transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
+          <div className="p-3 rounded bg-[#FEE2E2] border border-[#FCA5A5] text-xs text-[#991B1B]">
+            <strong>Scan Error:</strong> {error}
           </div>
         )}
 
-        {/* ── Empty State ── */}
+        {/* Empty state */}
         {!loading && !error && clusters.length === 0 && (
-          <div className="card border-emerald-800/40 bg-emerald-950/10 text-center py-12 fade-in">
-            <div className="text-4xl mb-3">✅</div>
-            <h3 className="font-bold text-emerald-300 text-lg mb-1">
-              No Split-Work Anomalies Detected
+          <div className="card bg-white border-[#86EFAC] text-center py-10 space-y-2">
+            <span className="text-3xl">✅</span>
+            <h3 className="font-bold text-sm text-[#166534]">
+              No Artificial Work-Splitting Anomalies Detected
             </h3>
-            <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto">
-              All active work orders in the system pass procurement integrity checks. No artificial
-              fragmentation patterns were detected.
+            <p className="text-xs text-[#64748B]">
+              All active works comply with statutory procurement guidelines.
             </p>
           </div>
         )}
 
-        {/* ── Cluster Cards + Banners ── */}
+        {/* Cluster list */}
         {!loading && !error && clusters.length > 0 && (
-          <div className="flex flex-col gap-8">
-            {/* AI Detection flow header */}
-            <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
-              <span className="text-amber-500">AI DETECTION</span>
-              <span>→</span>
-              <span>PROCUREMENT ANOMALY</span>
-              <span>→</span>
-              <span>UNIFIED TENDER</span>
-              <span>→</span>
-              <span>ENFORCEMENT</span>
-              <span>→</span>
-              <span>INTERVENTION CASE</span>
-            </div>
-
+          <div className="space-y-6">
             {clusters.map((cluster) => (
-              <div key={cluster.cluster_id} className="flex flex-col gap-4">
+              <div key={cluster.cluster_id} className="space-y-4">
                 <SplitWorkClusterCard cluster={cluster} />
                 <UnifiedTenderBanner
                   cluster={cluster}
@@ -275,20 +233,9 @@ export default function SplitWorkPage() {
             ))}
           </div>
         )}
+      </main>
 
-        {/* ── Help text ── */}
-        {!loading && (
-          <div className="mt-10 p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-[11px] text-[var(--text-muted)] leading-relaxed">
-            <strong className="text-[var(--text-secondary)]">How the AI detects split-work:</strong>{" "}
-            Projects within 3 km of each other, in the same constituency and category, are grouped.
-            The NLP engine computes semantic similarity (threshold ≥ 75%) and detects corridor
-            patterns (Reach 1/2/3, Phase I/II, from X to Y). If all individual costs are ≤ ₹5L and
-            the aggregate is ≥ ₹10L, the cluster is flagged. Enforcement sets{" "}
-            <code className="font-mono text-amber-400/80">mandatory_tender=true</code> and creates a
-            DA intervention case with full audit trail.
-          </div>
-        )}
-      </div>
+      <GovernmentFooter />
     </div>
   );
 }

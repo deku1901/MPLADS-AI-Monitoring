@@ -10,23 +10,23 @@ const TIERS = [
   {
     key: "DA",
     title: "District Authority (DA)",
-    role: "Collector / DM",
+    role: "Collector / District Magistrate",
     sla: "48h SLA",
     desc: "Primary review & evidence verification",
   },
   {
     key: "SNA",
     title: "State Nodal Authority (SNA)",
-    role: "Planning Dept",
+    role: "State Planning Department",
     sla: "72h SLA",
     desc: "State-level intervention on DA non-response",
   },
   {
     key: "MINISTRY",
     title: "Ministry (MoSPI)",
-    role: "Central Nodal",
+    role: "Central Nodal Officer",
     sla: "120h SLA",
-    desc: "Statutory sanctions hold & direct enquiry",
+    desc: "Statutory sanctions freeze & central enquiry",
   },
 ];
 
@@ -46,101 +46,70 @@ export default function EscalationTracker({ caseData }: EscalationTrackerProps) 
   const isResolved = caseData.status === "RESOLVED";
 
   return (
-    <div className="bg-[var(--bg-base)] border border-[var(--border-strong)] rounded-xl p-4 space-y-4">
-      {/* Header */}
+    <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded p-3.5 space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">🪜</span>
-          <span className="text-xs font-bold text-slate-200 uppercase tracking-wide">
-            Multi-Tier Statutory Escalation Ladder
-          </span>
-        </div>
-        <span className="text-[11px] text-[var(--text-muted)]">
+        <span className="text-[10px] font-bold text-[#0A2240] uppercase tracking-wider">
+          Statutory Multi-Tier Escalation Hierarchy
+        </span>
+        <span className="text-[11px] text-[#64748B] font-mono">
           {isResolved
-            ? "Resolved at " + currentTier + " Tier"
-            : "Currently Assigned: " + currentTier + " Tier"}
+            ? "Status: Resolved at " + currentTier + " Tier"
+            : "Active Enforcement Tier: " + currentTier}
         </span>
       </div>
 
       {/* Ladder Progression */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
         {TIERS.map((tier, idx) => {
           const isActive = !isResolved && idx === currentTierIndex;
           const isPassed = !isResolved && idx < currentTierIndex;
           const isResolvedAtThisTier = isResolved && idx === currentTierIndex;
 
-          let stateBorder = "border-[var(--border)] bg-[var(--bg-card)]/40 text-[var(--text-muted)]";
+          let cardStyle = "border-[#E2E8F0] bg-white text-[#64748B]";
           if (isActive) {
-            stateBorder = "border-amber-500/80 bg-amber-950/30 text-amber-200 shadow-md shadow-amber-950/30";
+            cardStyle = "border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-2xs";
           } else if (isPassed) {
-            stateBorder = "border-red-800/60 bg-red-950/20 text-red-300";
+            cardStyle = "border-[#F87171] bg-[#FEF2F2] text-[#991B1B]";
           } else if (isResolvedAtThisTier) {
-            stateBorder = "border-green-600/70 bg-green-950/30 text-green-300";
+            cardStyle = "border-[#86EFAC] bg-[#F0FDF4] text-[#166534]";
           }
 
           return (
             <div
               key={tier.key}
-              className={`p-3 rounded-lg border relative transition-all ${stateBorder}`}
+              className={`p-2.5 rounded border relative text-xs ${cardStyle}`}
             >
-              {/* Top status indicator */}
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-bold text-[11px] uppercase tracking-wider">
-                  Tier {idx + 1}: {tier.key}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold bg-black/40">
-                  {tier.sla}
-                </span>
+              <div className="flex items-center justify-between text-[10px] font-bold mb-1">
+                <span>Tier {idx + 1}: {tier.key}</span>
+                <span className="font-mono bg-black/5 px-1 rounded">{tier.sla}</span>
               </div>
-
-              <p className="text-xs font-semibold text-slate-200">{tier.title}</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{tier.desc}</p>
-
-              {/* Status pill tag */}
-              <div className="mt-2.5 pt-2 border-t border-black/30 flex items-center justify-between text-[10px]">
-                <span>Role: {tier.role}</span>
-                {isActive && (
-                  <span className="font-bold text-amber-400 animate-pulse">● ACTIVE TIER</span>
-                )}
-                {isPassed && (
-                  <span className="font-semibold text-red-400">↑ ESCALATED</span>
-                )}
-                {isResolvedAtThisTier && (
-                  <span className="font-semibold text-green-400">✓ RESOLVED HERE</span>
-                )}
-                {!isActive && !isPassed && !isResolvedAtThisTier && (
-                  <span className="text-slate-500">Standby</span>
-                )}
+              <p className="font-bold text-[#0F172A] text-xs">{tier.title}</p>
+              <p className="text-[10px] text-[#475569] mt-0.5">{tier.desc}</p>
+              <div className="mt-2 pt-1.5 border-t border-black/10 flex items-center justify-between text-[10px] font-semibold">
+                <span>{tier.role}</span>
+                {isActive && <span className="text-[#B45309]">● ACTIVE</span>}
+                {isPassed && <span className="text-[#B3261E]">↑ ESCALATED</span>}
+                {isResolvedAtThisTier && <span className="text-[#15803D]">✓ RESOLVED</span>}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Escalation Event Log if escalated */}
       {caseData.escalation_events && caseData.escalation_events.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-          <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wide">
-            ⚠️ Automated Escalation Log
+        <div className="pt-2 border-t border-[#CBD5E1] space-y-1">
+          <p className="text-[10px] font-bold text-[#B3261E] uppercase">
+            Escalation Audit Trail
           </p>
-          <div className="space-y-1.5">
-            {caseData.escalation_events.map((esc) => (
-              <div
-                key={esc.escalation_id}
-                className="bg-red-950/30 border border-red-800/40 p-2 rounded text-xs flex items-center justify-between"
-              >
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-red-300">
-                    Escalated from {esc.from_tier} → {esc.to_tier}
-                  </span>
-                  <p className="text-[11px] text-slate-300">Reason: {esc.reason}</p>
-                </div>
-                <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                  {formatDate(esc.triggered_at)}
-                </span>
-              </div>
-            ))}
-          </div>
+          {caseData.escalation_events.map((esc) => (
+            <div
+              key={esc.escalation_id}
+              className="bg-[#FEF2F2] border border-[#FECACA] p-2 rounded text-[11px] flex justify-between items-center text-[#991B1B]"
+            >
+              <span>Escalated from {esc.from_tier} → {esc.to_tier} ({esc.reason})</span>
+              <span className="font-mono text-[10px] text-[#64748B]">{formatDate(esc.triggered_at)}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

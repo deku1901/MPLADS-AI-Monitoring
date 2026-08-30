@@ -9,16 +9,18 @@ interface AuditTrailTimelineProps {
   loading?: boolean;
 }
 
-const EVENT_ICONS: Record<string, { icon: string; color: string; label: string }> = {
-  CASE_CREATED:        { icon: "🚨", color: "text-red-400 border-red-800 bg-red-950/40", label: "Case Created" },
-  PAYMENT_HELD:        { icon: "🛑", color: "text-red-400 border-red-800 bg-red-950/40", label: "Payment Held" },
-  EVIDENCE_SUBMITTED:  { icon: "📝", color: "text-blue-400 border-blue-800 bg-blue-950/40", label: "Evidence Submitted" },
-  RISK_SCORE_COMPUTED: { icon: "🤖", color: "text-purple-400 border-purple-800 bg-purple-950/40", label: "Risk Computed" },
-  CASE_RESOLVED:       { icon: "✅", color: "text-green-400 border-green-800 bg-green-950/40", label: "Case Resolved" },
-  PAYMENT_RELEASED:    { icon: "💰", color: "text-green-400 border-green-800 bg-green-950/40", label: "Payment Released" },
-  REMINDER_SENT:       { icon: "⏱️", color: "text-amber-400 border-amber-800 bg-amber-950/40", label: "SLA Reminder" },
-  CASE_ESCALATED:      { icon: "📈", color: "text-orange-400 border-orange-800 bg-orange-950/40", label: "Case Escalated" },
-  STATUS_CHANGE:       { icon: "🔄", color: "text-cyan-400 border-cyan-800 bg-cyan-950/40", label: "Status Change" },
+const EVENT_BADGES: Record<string, { label: string; cls: string }> = {
+  CASE_CREATED:        { label: "CASE CREATED", cls: "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]" },
+  PAYMENT_HELD:        { label: "PAYMENT HELD", cls: "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]" },
+  EVIDENCE_SUBMITTED:  { label: "EVIDENCE SUBMITTED", cls: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]" },
+  RISK_SCORE_COMPUTED: { label: "RISK COMPUTED", cls: "bg-[#F3E8FF] text-[#7E22CE] border-[#D8B4FE]" },
+  CASE_RESOLVED:       { label: "CASE RESOLVED", cls: "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]" },
+  PAYMENT_RELEASED:    { label: "PAYMENT RELEASED", cls: "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]" },
+  REMINDER_SENT:       { label: "SLA REMINDER", cls: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]" },
+  CASE_ESCALATED:      { label: "CASE ESCALATED", cls: "bg-[#FFEDD5] text-[#C2410C] border-[#FDBA74]" },
+  STATUS_CHANGE:       { label: "STATUS CHANGE", cls: "bg-[#F1F5F9] text-[#334155] border-[#CBD5E1]" },
+  SPLIT_WORK_DETECTED: { label: "SPLIT-WORK DETECTED", cls: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]" },
+  MANDATORY_TENDER_ENFORCED: { label: "MANDATORY TENDER ENFORCED", cls: "bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]" },
 };
 
 function formatDate(d: string | null | undefined): string {
@@ -47,25 +49,20 @@ export default function AuditTrailTimeline({
   });
 
   return (
-    <div className="card space-y-4">
+    <div className="card border-[#D5DCE5] bg-white shadow-xs space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3 border-b border-[var(--border)] pb-3">
+      <div className="card-header flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="text-base">📜</span>
-          <div>
-            <p className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
-              Immutable Audit Trail
-            </p>
-            <p className="text-[11px] text-[var(--text-muted)]">
-              Chronological log of all AI detections, interventions, and authority actions
-            </p>
-          </div>
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+            STATUTORY IMMUTABLE AUDIT TRAIL
+          </h3>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setReverseOrder(!reverseOrder)}
-            className="text-xs px-2.5 py-1 rounded bg-[var(--bg-base)] border border-[var(--border-strong)] text-[var(--text-secondary)] hover:text-slate-200 transition-colors"
+            className="text-[11px] font-bold px-2 py-1 rounded bg-white border border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC] cursor-pointer"
           >
             {reverseOrder ? "▼ Newest First" : "▲ Oldest First"}
           </button>
@@ -73,80 +70,67 @@ export default function AuditTrailTimeline({
             <button
               onClick={onRefresh}
               disabled={loading}
-              className="text-xs px-2.5 py-1 rounded bg-[var(--bg-base)] border border-[var(--border-strong)] text-[var(--text-secondary)] hover:text-slate-200 transition-colors disabled:opacity-50"
+              className="text-[11px] font-bold px-2 py-1 rounded bg-white border border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC] cursor-pointer disabled:opacity-50"
             >
-              {loading ? "Refreshing…" : "↻ Refresh"}
+              {loading ? "Refreshing…" : "↻ Refresh Log"}
             </button>
           )}
         </div>
       </div>
 
-      {/* Event list */}
       {sortedEvents.length === 0 ? (
-        <p className="text-xs text-[var(--text-muted)] py-4 text-center">
+        <p className="text-xs text-[#64748B] py-6 text-center">
           No audit events recorded yet for this project.
         </p>
       ) : (
-        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--border-strong)]">
-          {sortedEvents.map((ev) => {
-            const meta = EVENT_ICONS[ev.event_type] ?? {
-              icon: "📌",
-              color: "text-slate-400 border-slate-700 bg-slate-900/40",
-              label: ev.event_type,
-            };
+        <div className="overflow-x-auto">
+          <table className="gov-table">
+            <thead>
+              <tr>
+                <th className="w-36">Timestamp</th>
+                <th className="w-44">Event Type</th>
+                <th>Description &amp; Action Record</th>
+                <th className="w-32">Actor / Role</th>
+                <th className="w-28 text-right">Event ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedEvents.map((ev) => {
+                const badge = EVENT_BADGES[ev.event_type] ?? {
+                  label: ev.event_type,
+                  cls: "bg-[#F1F5F9] text-[#334155] border-[#CBD5E1]",
+                };
 
-            return (
-              <div key={ev.event_id} className="relative group">
-                {/* Node marker */}
-                <div
-                  className={`absolute -left-[27px] top-0.5 w-6 h-6 rounded-full border flex items-center justify-center text-xs shadow-md ${meta.color}`}
-                >
-                  <span>{meta.icon}</span>
-                </div>
-
-                {/* Event card */}
-                <div className="bg-[var(--bg-base)] border border-[var(--border-strong)] rounded-lg p-3.5 space-y-1.5 transition-colors hover:border-slate-600">
-                  <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-200">{meta.label}</span>
-                      <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                        ({ev.event_id})
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                return (
+                  <tr key={ev.event_id}>
+                    <td className="font-mono text-[11px] text-[#64748B] whitespace-nowrap">
                       {formatDate(ev.timestamp)}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {ev.description || "System state transition"}
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--text-muted)] pt-1 border-t border-[var(--border)]">
-                    {ev.actor_role && (
-                      <span>
-                        Actor: <span className="text-slate-300 font-medium">{ev.actor_role}</span>
-                        {ev.actor_id ? ` (${ev.actor_id})` : ""}
+                    </td>
+                    <td>
+                      <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${badge.cls}`}>
+                        {badge.label}
                       </span>
-                    )}
-                    {ev.case_id && (
-                      <span>
-                        Case: <span className="text-amber-300 font-mono font-medium">{ev.case_id}</span>
-                      </span>
-                    )}
-                    {ev.old_value && ev.new_value && (
-                      <span>
-                        Transition:{" "}
-                        <span className="text-red-400 font-mono">{ev.old_value}</span>
-                        {" → "}
-                        <span className="text-green-400 font-mono">{ev.new_value}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                    <td className="text-xs text-[#1E293B]">
+                      <div>{ev.description || "System statutory state transition"}</div>
+                      {ev.case_id && (
+                        <span className="text-[10px] font-mono text-[#0369A1] font-semibold mt-0.5 inline-block">
+                          Case Ref: {ev.case_id}
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-[11px] text-[#475569] font-medium">
+                      {ev.actor_role || "SYSTEM"}
+                      {ev.actor_id ? ` (${ev.actor_id})` : ""}
+                    </td>
+                    <td className="font-mono text-[10px] text-[#64748B] text-right">
+                      {ev.event_id}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

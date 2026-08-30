@@ -2,22 +2,12 @@
 
 import type { SplitWorkCluster, SplitWorkMemberProject } from "@/lib/types";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function formatInr(amount: number | null | undefined): string {
   if (amount == null) return "—";
   if (amount >= 1_00_000) {
     return `₹${(amount / 1_00_000).toFixed(2)}L`;
   }
   return `₹${amount.toLocaleString("en-IN")}`;
-}
-
-function similarityColor(sim: number): string {
-  if (sim >= 0.9) return "text-red-400";
-  if (sim >= 0.75) return "text-amber-400";
-  return "text-emerald-400";
 }
 
 interface MemberRowProps {
@@ -31,48 +21,29 @@ function MemberRow({ project, thresholdInr, index }: MemberRowProps) {
   const belowThreshold = amount <= thresholdInr;
 
   return (
-    <div
-      className="group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-base)] px-4 py-3 transition-colors hover:border-amber-500/40 hover:bg-amber-950/10"
-      style={{ animationDelay: `${index * 60}ms` }}
-    >
-      {/* Reach indicator */}
-      <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-900/30 border border-amber-700/50 text-amber-400 text-xs font-bold font-mono">
-        R{index + 1}
-      </div>
-
-      {/* Project info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-mono text-[11px] text-[var(--text-muted)] bg-[var(--bg-elevated)] px-1.5 py-0.5 rounded">
-            {project.project_id}
-          </span>
-          {project.mandatory_tender ? (
-            <span className="pill pill-held text-[9px]">⚠ Tender Required</span>
-          ) : (
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide"
-              style={{ background: "rgba(20,83,45,0.5)", color: "#86efac" }}
-            >
-              ✓ Direct Quotation
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-[var(--text-primary)] font-medium leading-snug truncate" title={project.title}>
-          {project.title}
-        </p>
-        {project.location_text && (
-          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">📍 {project.location_text}</p>
-        )}
-      </div>
-
-      {/* Amount with threshold indicator */}
-      <div className="flex-shrink-0 flex flex-col items-end gap-1">
-        <span className={`text-sm font-bold font-mono ${belowThreshold ? "text-amber-400" : "text-red-400"}`}>
-          {formatInr(amount)}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-xs">
+      <div className="flex items-center gap-2.5">
+        <span className="w-6 h-6 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#0A2240] font-mono font-bold text-[10px] flex items-center justify-center">
+          R{index + 1}
         </span>
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[10px] font-bold text-[#123B6D]">{project.project_id}</span>
+            {project.mandatory_tender ? (
+              <span className="pill pill-held text-[9px]">E-Tender Enforced</span>
+            ) : (
+              <span className="pill pill-approved text-[9px]">Direct Quotation Claimed</span>
+            )}
+          </div>
+          <p className="font-semibold text-[#0F172A] text-xs mt-0.5">{project.title}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center sm:flex-col sm:items-end gap-1">
+        <span className="font-mono font-bold text-xs text-[#0F172A]">{formatInr(amount)}</span>
         {belowThreshold && (
-          <span className="text-[9px] text-amber-600 bg-amber-950/40 border border-amber-800/40 px-1.5 py-0.5 rounded">
-            ≤ ₹5L ceiling ↓
+          <span className="text-[10px] text-[#B45309] font-medium bg-[#FEF3C7] px-1.5 py-0.2 rounded border border-[#FCD34D]">
+            ≤ ₹5.00L ceiling
           </span>
         )}
       </div>
@@ -80,145 +51,86 @@ function MemberRow({ project, thresholdInr, index }: MemberRowProps) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main Card
-// ---------------------------------------------------------------------------
-
-interface SplitWorkClusterCardProps {
-  cluster: SplitWorkCluster;
-}
-
-export default function SplitWorkClusterCard({ cluster }: SplitWorkClusterCardProps) {
+export default function SplitWorkClusterCard({ cluster }: { cluster: SplitWorkCluster }) {
   const simPct = Math.round(cluster.nlp_corridor_similarity * 100);
-  const simColorClass = similarityColor(cluster.nlp_corridor_similarity);
   const totalFormatted = formatInr(cluster.total_aggregated_cost_inr);
   const thresholdFormatted = formatInr(cluster.individual_threshold_inr);
   const exceedsThreshold = cluster.total_aggregated_cost_inr >= 10_00_000;
 
   return (
-    <div className="card fade-in border-amber-700/40 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none rounded-xl opacity-30"
-        style={{
-          background:
-            "radial-gradient(ellipse at top left, rgba(217,119,6,0.12) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* ── Header ── */}
-      <div className="relative flex flex-col sm:flex-row sm:items-start gap-4 mb-5">
-        {/* Icon + Title */}
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-900/30 border border-amber-700/50 flex items-center justify-center text-lg shadow-inner">
-            🔍
+    <div className="card border-[#D5DCE5] bg-white shadow-xs space-y-4">
+      {/* Header */}
+      <div className="card-header flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="pill pill-held text-[9px]">STATUTORY PROCUREMENT ANOMALY</span>
+            {cluster.mandatory_tender_enforced && (
+              <span className="pill pill-held text-[9px]">🔒 MANDATORY TENDER ENFORCED</span>
+            )}
+            {cluster.case_id && (
+              <span className="font-mono font-bold text-[10px] bg-[#EFF6FF] text-[#1D4ED8] px-1.5 py-0.5 rounded border border-[#BFDBFE]">
+                Case Ref: {cluster.case_id}
+              </span>
+            )}
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="pill pill-held text-[10px]">⚠ PROCUREMENT ANOMALY</span>
-              {cluster.mandatory_tender_enforced && (
-                <span
-                  className="pill text-[10px]"
-                  style={{ background: "rgba(124,29,29,0.7)", color: "#fca5a5", border: "1px solid rgba(220,38,38,0.4)" }}
-                >
-                  🔒 TENDER ENFORCED
-                </span>
-              )}
-              {cluster.case_id && (
-                <span className="pill pill-accent text-[10px] font-mono">
-                  {cluster.case_id}
-                </span>
-              )}
-            </div>
-            <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight" title={cluster.corridor_name}>
-              {cluster.corridor_name}
-            </h3>
-            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
-              {cluster.constituency} · {cluster.category.replace(/_/g, " ")}
-            </p>
-          </div>
+          <h3 className="font-bold text-sm text-[#0A2240] pt-1">
+            {cluster.corridor_name}
+          </h3>
+          <p className="text-[11px] text-[#64748B]">
+            Constituency: {cluster.constituency} · Sector: {cluster.category.replace(/_/g, " ")}
+          </p>
         </div>
 
-        {/* NLP Similarity Score */}
-        <div className="flex-shrink-0 flex flex-col items-end gap-1">
-          <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">NLP Similarity</div>
-          <div className={`text-2xl font-bold font-mono ${simColorClass}`}>{simPct}%</div>
-          <div className="text-[9px] text-[var(--text-muted)]">Corridor match</div>
-          {/* Similarity bar */}
-          <div className="w-24 h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden mt-1">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${simPct}%`,
-                background: cluster.nlp_corridor_similarity >= 0.9
-                  ? "linear-gradient(90deg, #f59e0b, #ef4444)"
-                  : "linear-gradient(90deg, #d97706, #f59e0b)",
-              }}
-            />
-          </div>
+        {/* Similarity pill */}
+        <div className="bg-white p-2.5 rounded border border-[#CBD5E1] text-right">
+          <span className="text-[9px] font-bold text-[#64748B] uppercase">NLP Semantic Overlap</span>
+          <p className="text-xl font-black font-mono text-[#B3261E]">{simPct}%</p>
+          <span className="text-[9px] text-[#64748B]">Corridor Match</span>
         </div>
       </div>
 
-      {/* ── Financial Threshold Analysis ── */}
-      <div className="relative mb-5 p-4 rounded-xl bg-[var(--bg-base)] border border-[var(--border-strong)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-          Procurement Threshold Analysis
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          {/* Individual */}
-          <div className="text-center">
-            <div className="text-[10px] text-[var(--text-muted)] mb-1">Per Work Order</div>
-            <div className="text-lg font-bold font-mono text-amber-400">
+      {/* Threshold Analysis Tile */}
+      <div className="p-3.5 rounded bg-[#F8FAFC] border border-[#CBD5E1] space-y-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">
+          Statutory Procurement Threshold Verification
+        </span>
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="p-2 rounded bg-white border border-[#E2E8F0]">
+            <span className="text-[10px] text-[#64748B]">Individual Split Cost</span>
+            <p className="font-mono font-bold text-[#B45309] text-sm mt-0.5">
               ~{formatInr(Math.round(cluster.total_aggregated_cost_inr / Math.max(cluster.member_projects.length, 1)))}
-            </div>
-            <div className="text-[9px] text-amber-600 mt-1 flex items-center justify-center gap-1">
-              <span>≤ {thresholdFormatted} ceiling</span>
-              <span className="text-amber-400">↓ BELOW</span>
-            </div>
+            </p>
+            <span className="text-[9px] text-[#B45309]">≤ {thresholdFormatted} Ceiling (Direct Quote)</span>
           </div>
 
-          {/* Arrow */}
-          <div className="flex flex-col items-center justify-center gap-1">
-            <div className="text-[10px] text-[var(--text-muted)] text-center">
-              {cluster.member_projects.length} works
-            </div>
-            <div className="text-xl text-amber-500">→</div>
-            <div className="text-[9px] text-amber-600 text-center">combined</div>
+          <div className="flex flex-col items-center justify-center text-xs text-[#64748B]">
+            <span className="text-[10px] font-bold text-[#0F172A]">{cluster.member_projects.length} Split Orders</span>
+            <span className="text-lg text-[#123B6D]">→</span>
+            <span className="text-[9px]">Artificially Divided</span>
           </div>
 
-          {/* Aggregate */}
-          <div className="text-center">
-            <div className="text-[10px] text-[var(--text-muted)] mb-1">Aggregate Total</div>
-            <div className={`text-lg font-bold font-mono ${exceedsThreshold ? "text-red-400" : "text-amber-400"}`}>
+          <div className="p-2 rounded bg-white border border-[#E2E8F0]">
+            <span className="text-[10px] text-[#64748B]">Consolidated Cost</span>
+            <p className="font-mono font-bold text-[#B3261E] text-sm mt-0.5">
               {totalFormatted}
-            </div>
-            <div className={`text-[9px] mt-1 flex items-center justify-center gap-1 ${exceedsThreshold ? "text-red-500" : "text-[var(--text-muted)]"}`}>
-              {exceedsThreshold ? (
-                <>≥ ₹10L threshold <span className="text-red-400">↑ EXCEEDS</span></>
-              ) : (
-                <span>Below threshold</span>
-              )}
-            </div>
+            </p>
+            <span className="text-[9px] text-[#B3261E] font-bold">≥ ₹10.00L Mandatory Tender</span>
           </div>
         </div>
 
-        {/* Threshold exceeded banner */}
         {exceedsThreshold && (
-          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-950/40 border border-red-800/40 text-[11px] text-red-300">
-            <span className="text-base">⚡</span>
-            <span>
-              Aggregate {totalFormatted} exceeds ₹10L mandatory e-tender threshold while each individual work order is priced ≤ {thresholdFormatted} — indicating artificial fragmentation to evade public procurement rules.
-            </span>
+          <div className="p-2.5 rounded bg-[#FEF2F2] border border-[#FCA5A5] text-[11px] text-[#991B1B]">
+            <strong>Violation Detected:</strong> Consolidated corridor value ({totalFormatted}) exceeds the ₹10L statutory threshold while each individual order is kept below ₹5L — indicating artificial fragmentation to evade mandatory public e-tendering.
           </div>
         )}
       </div>
 
-      {/* ── Member Work Orders ── */}
-      <div className="relative mb-5">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-          Fragmented Work Orders ({cluster.member_projects.length})
-        </div>
-        <div className="flex flex-col gap-2">
+      {/* Member Projects */}
+      <div className="space-y-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">
+          Fragmented Member Work Orders ({cluster.member_projects.length})
+        </span>
+        <div className="space-y-1.5">
           {cluster.member_projects.map((proj, idx) => (
             <MemberRow
               key={proj.project_id}
@@ -230,17 +142,17 @@ export default function SplitWorkClusterCard({ cluster }: SplitWorkClusterCardPr
         </div>
       </div>
 
-      {/* ── NLP Corridor Tokens ── */}
+      {/* Keywords */}
       {cluster.overlapping_corridor_tokens.length > 0 && (
-        <div className="relative">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-            Shared Corridor Keywords
-          </div>
-          <div className="flex flex-wrap gap-1.5">
+        <div className="space-y-1 pt-1 border-t border-[#E2E8F0]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#475569]">
+            Shared Physical Reach &amp; Corridor Tokens
+          </span>
+          <div className="flex flex-wrap gap-1">
             {cluster.overlapping_corridor_tokens.map((token) => (
               <span
                 key={token}
-                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold text-amber-300 bg-amber-950/40 border border-amber-800/30"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-[#0A2240] bg-[#EFF6FF] border border-[#BFDBFE]"
               >
                 {token}
               </span>

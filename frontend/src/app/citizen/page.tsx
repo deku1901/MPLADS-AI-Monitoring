@@ -7,6 +7,7 @@ import HeaderNav from "@/components/HeaderNav";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import CitizenFeedbackBadge from "@/components/CitizenFeedbackBadge";
 import CitizenReportForm from "@/components/CitizenReportForm";
+import GovernmentFooter from "@/components/GovernmentFooter";
 
 function fmt(n: number | null | undefined): string {
   if (n == null) return "—";
@@ -82,7 +83,7 @@ export default function CitizenPortalPage() {
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
       <HeaderNav
         projectId="MPL-2026-1042"
         onOpenNotifications={() => setIsNotificationOpen(true)}
@@ -95,77 +96,71 @@ export default function CitizenPortalPage() {
         onClose={() => setIsNotificationOpen(false)}
       />
 
-      <main className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto space-y-8 fade-in">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 w-full space-y-6 fade-in flex-1">
         {/* Breadcrumb Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4 text-xs text-[var(--text-muted)]">
-          <div className="flex items-center gap-2 uppercase tracking-widest">
-            <span className="text-[var(--accent)] font-bold">Public Transparency</span>
-            <span className="text-[var(--border-strong)]">›</span>
-            <span className="text-[var(--text-primary)]">Citizen Ground-Truth Verification Portal</span>
+        <div className="flex items-center justify-between flex-wrap gap-2 text-xs pb-2 border-b border-[#D5DCE5]">
+          <div className="flex items-center gap-1.5 font-medium text-[#475569]">
+            <span className="text-[#123B6D] font-bold">Dashboard</span>
+            <span>&gt;</span>
+            <span className="text-[#123B6D] font-bold">Public Oversight</span>
+            <span>&gt;</span>
+            <span className="font-bold text-[#0F172A]">Citizen Ground-Truth Verification Portal</span>
           </div>
 
-          <span className="px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800 text-[11px] font-mono">
-            Vertical Slice 3: Ground Truth
+          <span className="px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] text-[11px] font-mono font-bold">
+            Slice 3: Weighted Credibility Consensus
           </span>
         </div>
 
         {/* Overview Banner */}
-        <section className="card bg-[var(--bg-elevated)] border-[var(--border-strong)]">
-          <div className="flex items-start gap-4">
-            <span className="text-3xl">👥</span>
+        <section className="card bg-white border-[#D5DCE5]">
+          <div className="flex items-start gap-3.5">
+            <span className="text-2xl">👥</span>
             <div className="space-y-1">
-              <h1 className="text-xl font-bold text-[var(--text-primary)]">
-                Community Verification &amp; Public Asset Audit
+              <h1 className="text-base md:text-lg font-bold text-[#0A2240] uppercase tracking-wide">
+                CITIZEN PARTICIPATORY AUDIT &amp; ASSET VERIFICATION PORTAL
               </h1>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed max-w-3xl">
-                Citizens can verify completed and executing MPLADS assets in their locality.
-                Verified ground-truth reports with GPS and photos build community consensus. If
-                credible negative reports accumulate ($\ge 3.0$), the system autonomously triggers
-                an official on-site inspection case for the District Authority.
+              <p className="text-xs text-[#475569] leading-relaxed max-w-4xl">
+                Citizens can verify developmental works funded under MPLADS in their constituency.
+                Geotagged reports and on-site photos build public credibility scores. When cumulative credible negative
+                reports reach the statutory threshold (score $\ge 3.0$), the system autonomously triggers an official
+                on-site inquiry case (<code className="font-mono font-bold text-[#B3261E]">INSPECTION_REQUIRED</code>) for the District Authority.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Inspection Trigger Banner (Shown when a dispute threshold is crossed) */}
+        {/* Autonomous Inspection Case Generated Banner */}
         {lastSubmissionResult?.inspection_triggered && (
-          <section className="slide-down p-5 rounded-xl border border-red-600/80 bg-red-950/50 shadow-2xl shadow-red-950/50 space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl animate-bounce">🚨</span>
-              <div>
-                <h2 className="text-sm font-bold text-red-200 uppercase tracking-wide">
-                  Autonomous Inspection Case Generated — DA Notified
-                </h2>
-                <p className="text-xs text-red-300 mt-0.5">
-                  Citizen negative credibility threshold ($\ge 3.0$) reached for project{" "}
-                  <span className="font-mono font-bold text-white">
-                    {lastSubmissionResult.project_id}
-                  </span>
-                  . Case{" "}
-                  <span className="font-mono font-bold text-amber-300">
-                    {lastSubmissionResult.case_id}
-                  </span>{" "}
-                  auto-created and assigned to District Authority for mandatory on-site inspection.
-                </p>
-              </div>
+          <section className="p-4 rounded border border-[#F87171] bg-[#FEF2F2] shadow-xs slide-down space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚨</span>
+              <h2 className="text-xs font-bold text-[#991B1B] uppercase tracking-wide">
+                AUTONOMOUS STATUTORY INSPECTION CASE GENERATED — DISTRICT AUTHORITY NOTIFIED
+              </h2>
             </div>
-          </section>
-        )}
-
-        {/* Positive Verification Success Banner */}
-        {lastSubmissionResult && !lastSubmissionResult.inspection_triggered && (
-          <section className="slide-down p-4 rounded-xl border border-green-600/70 bg-green-950/40 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-green-300">
-              <span>✅</span>
-              <span>Ground-Truth Verification Recorded (Credibility Score: {lastSubmissionResult.credibility_score}/3.5)</span>
-            </div>
-            <p className="text-xs text-slate-300">
-              Thank you for contributing to public asset accountability in your constituency.
+            <p className="text-xs text-[#7F1D1D] pl-7">
+              Cumulative citizen negative credibility threshold reached (&ge; 3.0) for work{" "}
+              <strong className="font-mono text-[#0F172A]">{lastSubmissionResult.project_id}</strong>.
+              Intervention Case <strong className="font-mono text-[#123B6D]">{lastSubmissionResult.case_id}</strong> was auto-created and dispatched to the District Collector for mandatory physical inquiry.
             </p>
           </section>
         )}
 
-        {/* Selected Project Form Modal / Inline Section */}
+        {/* Positive Verification Recorded Banner */}
+        {lastSubmissionResult && !lastSubmissionResult.inspection_triggered && (
+          <section className="p-3.5 rounded border border-[#86EFAC] bg-[#F0FDF4] text-xs space-y-0.5 slide-down">
+            <div className="flex items-center gap-2 font-bold text-[#166534]">
+              <span>✅</span>
+              <span>Ground-Truth Verification Logged (Credibility Weight: {lastSubmissionResult.credibility_score}/3.5)</span>
+            </div>
+            <p className="text-[#334155] pl-6 text-[11px]">
+              Thank you for contributing to transparent public infrastructure monitoring in your constituency.
+            </p>
+          </section>
+        )}
+
+        {/* Form Modal / Active Form */}
         {selectedProject && (
           <section>
             <CitizenReportForm
@@ -176,27 +171,27 @@ export default function CitizenPortalPage() {
           </section>
         )}
 
-        {/* Project Directory */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-              Public MPLADS Assets Directory ({projects.length} Works)
-            </h2>
+        {/* Public Works Directory Grid */}
+        <section className="card bg-white border-[#D5DCE5] space-y-4">
+          <div className="card-header flex items-center justify-between">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+              PUBLIC MPLADS WORKS DIRECTORY ({projects.length} WORKS REGISTERED)
+            </h3>
             <button
               onClick={fetchProjects}
-              className="text-xs px-3 py-1 rounded bg-[var(--bg-elevated)] border border-[var(--border-strong)] text-[var(--text-secondary)] hover:text-white transition-colors"
+              className="text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC] cursor-pointer"
             >
-              ↻ Refresh
+              ↻ Refresh List
             </button>
           </div>
 
           {loading && projects.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[var(--text-muted)]">
-              Loading public assets directory…
-            </div>
+            <p className="text-xs text-[#64748B] text-center py-8">
+              Retrieving public works directory…
+            </p>
           ) : error ? (
-            <div className="p-4 rounded-lg bg-red-950/40 border border-red-800 text-xs text-red-300">
-              Error: {error}
+            <div className="p-3 rounded bg-[#FEE2E2] border border-[#FCA5A5] text-xs text-[#991B1B]">
+              <strong>Directory Error:</strong> {error}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,41 +201,41 @@ export default function CitizenPortalPage() {
                 return (
                   <div
                     key={proj.project_id}
-                    className={`card bg-[var(--bg-elevated)] border transition-all space-y-4 ${
+                    className={`p-4 rounded border transition-all space-y-3 ${
                       isSelected
-                        ? "border-blue-500 ring-2 ring-blue-500/40"
+                        ? "border-[#123B6D] ring-2 ring-[#123B6D]/20 bg-[#F8FAFC]"
                         : proj.status === "INSPECTION_REQUIRED"
-                        ? "border-red-700/60 bg-red-950/20"
-                        : "border-[var(--border-strong)] hover:border-slate-600"
+                        ? "border-[#FCA5A5] bg-[#FEF2F2]"
+                        : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <span className="font-mono text-xs font-bold text-amber-300">
+                      <div className="space-y-0.5">
+                        <span className="font-mono text-xs font-bold text-[#123B6D]">
                           {proj.project_id}
                         </span>
-                        <h3 className="text-sm font-bold text-slate-200 leading-tight">
+                        <h4 className="text-sm font-bold text-[#0F172A] leading-tight">
                           {proj.title}
-                        </h3>
+                        </h4>
                       </div>
-                      <span className="pill pill-accent text-[10px] shrink-0">
+                      <span className="pill pill-accent text-[9px] shrink-0">
                         {proj.status.replace(/_/g, " ")}
                       </span>
                     </div>
 
                     {proj.description && (
-                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+                      <p className="text-xs text-[#475569] leading-relaxed line-clamp-2">
                         {proj.description}
                       </p>
                     )}
 
-                    <div className="text-xs text-[var(--text-muted)] space-y-1 pt-2 border-t border-[var(--border)]">
-                      <p>📍 {proj.location_text || "Varanasi, Uttar Pradesh"}</p>
-                      <p>💰 Sanctioned Amount: <span className="font-semibold text-slate-300">{fmt(proj.sanctioned_amount_inr)}</span></p>
+                    <div className="text-[11px] text-[#64748B] pt-2 border-t border-[#E2E8F0] space-y-0.5">
+                      <p>📍 Location: {proj.location_text || "Varanasi, UP"}</p>
+                      <p>💰 Sanctioned Amount: <strong className="text-[#0F172A]">{fmt(proj.sanctioned_amount_inr)}</strong></p>
                     </div>
 
-                    {/* Consensus Badge */}
-                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between flex-wrap gap-2">
+                    {/* Consensus Status & Action */}
+                    <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between flex-wrap gap-2">
                       <CitizenFeedbackBadge
                         status={proj.citizen_verification_status}
                         positiveCount={proj.positive_reports_count}
@@ -249,10 +244,10 @@ export default function CitizenPortalPage() {
 
                       <button
                         onClick={() => setSelectedProject(proj)}
-                        className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                        className={`text-xs font-bold px-3 py-1.5 rounded transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-blue-600 text-white"
-                            : "bg-[var(--bg-base)] border border-[var(--border-strong)] text-slate-200 hover:border-blue-500 hover:text-white"
+                            ? "bg-[#123B6D] text-white"
+                            : "bg-[#F1F5F9] border border-[#CBD5E1] text-[#0F172A] hover:bg-[#123B6D] hover:text-white"
                         }`}
                       >
                         {isSelected ? "Active Form ↑" : "🔍 Verify Asset"}
@@ -265,6 +260,8 @@ export default function CitizenPortalPage() {
           )}
         </section>
       </main>
-    </>
+
+      <GovernmentFooter />
+    </div>
   );
 }

@@ -6,15 +6,12 @@ import type { PaymentSubmitResponse } from "@/lib/types";
 
 interface PaymentPanelProps {
   projectId: string;
-  /** Called with the real API result when submission succeeds */
   onSuccess: (result: PaymentSubmitResponse, prevRisk: number) => void;
-  /** Called when submission starts (so parent can show AI overlay) */
   onAnalyzing: (analyzing: boolean) => void;
-  /** Current project risk score — captured as "before" value */
   currentRisk: number;
 }
 
-const DEMO_AMOUNT = 420000; // ₹4,20,000 — seeded demo payment amount
+const DEMO_AMOUNT = 420000; // ₹4,20,000
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -24,11 +21,6 @@ function fmt(n: number) {
   }).format(n);
 }
 
-/**
- * Payment submission panel.
- * Connects directly to POST /api/payments.
- * All state transitions are driven by the real backend response.
- */
 export default function PaymentPanel({
   projectId,
   onSuccess,
@@ -69,124 +61,102 @@ export default function PaymentPanel({
   }
 
   return (
-    <div className="card border-[var(--accent-muted)] bg-[var(--bg-elevated)]">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent-muted)] flex items-center justify-center text-base">
-          💳
+    <div className="card border-[#D5DCE5] bg-white shadow-xs">
+      <div className="card-header flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-base">💳</span>
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+            SUBMIT CONTRACTOR BILL &amp; TRANCHE RELEASE REQUEST
+          </h3>
         </div>
-        <div>
-          <p className="font-semibold text-sm text-[var(--text-primary)]">
-            Submit Payment Request
-          </p>
-          <p className="text-xs text-[var(--text-muted)]">
-            Triggers live AI risk analysis on the backend
-          </p>
-        </div>
+        <span className="text-[11px] text-[#64748B] font-mono">
+          Implementing Agency: {submittedBy}
+        </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Amount */}
+          <div className="space-y-1">
+            <label
+              htmlFor="payment-amount"
+              className="text-xs font-bold text-[#334155] uppercase tracking-wide"
+            >
+              Claimed Amount (INR) <span className="text-red-600">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] text-sm font-bold">
+                ₹
+              </span>
+              <input
+                id="payment-amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                min={1}
+                required
+                className="w-full pl-7 pr-3 py-2 rounded border border-[#CBD5E1] bg-white text-[#0F172A] text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-[#123B6D] focus:border-[#123B6D]"
+              />
+            </div>
+            <p className="text-[11px] text-[#64748B]">
+              Standard milestone demo claim: {fmt(DEMO_AMOUNT)}
+            </p>
+          </div>
 
-        {/* Amount */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="payment-amount"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Amount (INR)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm">
-              ₹
-            </span>
+          {/* Submitter ID */}
+          <div className="space-y-1">
+            <label
+              htmlFor="submitted-by"
+              className="text-xs font-bold text-[#334155] uppercase tracking-wide"
+            >
+              Submitting Agency ID <span className="text-red-600">*</span>
+            </label>
             <input
-              id="payment-amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              min={1}
+              id="submitted-by"
+              type="text"
+              value={submittedBy}
+              onChange={(e) => setSubmittedBy(e.target.value)}
               required
-              className="w-full pl-7 pr-4 py-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+              className="w-full px-3 py-2 rounded border border-[#CBD5E1] bg-white text-[#0F172A] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#123B6D] focus:border-[#123B6D]"
             />
-          </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            Demo amount: {fmt(DEMO_AMOUNT)}
-          </p>
-        </div>
-
-        {/* Submitted by */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="submitted-by"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-          >
-            Submitted By
-          </label>
-          <input
-            id="submitted-by"
-            type="text"
-            value={submittedBy}
-            onChange={(e) => setSubmittedBy(e.target.value)}
-            required
-            placeholder="e.g. DRDA-IA"
-            className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
-          />
-        </div>
-
-        {/* Demo scenario toggle */}
-        <label
-          htmlFor="trigger-demo"
-          className="flex items-start gap-3 cursor-pointer rounded-lg border border-[var(--border-strong)] bg-[var(--bg-base)] p-3 hover:border-[var(--accent)] transition-colors"
-        >
-          <input
-            id="trigger-demo"
-            type="checkbox"
-            checked={triggerDemo}
-            onChange={(e) => setTriggerDemo(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded accent-blue-500"
-          />
-          <div>
-            <p className="text-xs font-semibold text-[var(--text-primary)]">
-              Trigger Demo Scenario
-            </p>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Enables the deterministic high-risk path on the backend
-              (Risk 32 → 79, Payment HELD, Case auto-created)
+            <p className="text-[11px] text-[#64748B]">
+              District Rural Development Agency / IA Code
             </p>
           </div>
-        </label>
+        </div>
 
-        {/* Evidence photo upload — required for photo_duplicate detection (pushes risk >= 70) */}
-        <div className="space-y-1.5">
+        {/* Evidence Photo upload */}
+        <div className="space-y-1">
           <label
             htmlFor="evidence-photo"
-            className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
+            className="text-xs font-bold text-[#334155] uppercase tracking-wide"
           >
-            Evidence Photo
-            <span className="ml-1 text-red-400">*</span>
+            Mandatory Milestone Geo-tagged Evidence Photo <span className="text-red-600">*</span>
           </label>
-          <label
-            htmlFor="evidence-photo"
-            className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-              imageFile
-                ? "border-green-600/60 bg-green-950/20"
-                : "border-[var(--border-strong)] bg-[var(--bg-base)] hover:border-[var(--accent)]"
-            }`}
-          >
-            <span className="text-lg">{imageFile ? "🖼️" : "📎"}</span>
-            <span className="text-sm text-[var(--text-secondary)] truncate">
-              {imageFile ? imageFile.name : "Attach site photo (JPEG/PNG)"}
-            </span>
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor="evidence-photo"
+              className={`flex-1 flex items-center justify-between px-3 py-2 rounded border cursor-pointer text-xs ${
+                imageFile
+                  ? "border-[#86EFAC] bg-[#F0FDF4] text-[#166534] font-medium"
+                  : "border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC]"
+              }`}
+            >
+              <span>{imageFile ? `📎 ${imageFile.name}` : "Attach site progress photograph (JPEG/PNG)..."}</span>
+              <span className="px-2 py-0.5 rounded bg-[#E2E8F0] text-[#1E293B] font-bold text-[10px]">
+                Browse File
+              </span>
+            </label>
             {imageFile && (
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); setImageFile(null); }}
-                className="ml-auto text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors shrink-0"
-                aria-label="Remove image"
+                onClick={() => setImageFile(null)}
+                className="text-xs text-red-600 hover:underline cursor-pointer"
               >
-                ✕
+                Clear
               </button>
             )}
-          </label>
+          </div>
           <input
             id="evidence-photo"
             type="file"
@@ -194,28 +164,46 @@ export default function PaymentPanel({
             className="sr-only"
             onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
           />
-          <p className="text-xs text-[var(--text-muted)]">
-            Required for duplicate-photo detection — triggers{" "}
-            <span className="text-amber-400 font-semibold">HELD_FOR_REVIEW</span> path.
+          <p className="text-[11px] text-[#64748B]">
+            Automated pHash computer vision compares image against national database for duplicate detection.
           </p>
         </div>
 
-        {/* Error */}
+        {/* Demo trigger toggle */}
+        <div className="p-3 rounded bg-[#F8FAFC] border border-[#CBD5E1]">
+          <label htmlFor="trigger-demo" className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              id="trigger-demo"
+              type="checkbox"
+              checked={triggerDemo}
+              onChange={(e) => setTriggerDemo(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded accent-[#123B6D]"
+            />
+            <div>
+              <p className="text-xs font-bold text-[#0F172A]">
+                Deterministic Anomaly Escalation Mode
+              </p>
+              <p className="text-[11px] text-[#64748B]">
+                Executes complete statutory firebreak path (Evaluates Risk 32 → 79, holds payment as HELD_FOR_REVIEW, creates CASE-1042 for DA).
+              </p>
+            </div>
+          </label>
+        </div>
+
         {error && (
-          <div className="rounded-lg bg-red-950/50 border border-red-800/60 px-4 py-3">
-            <p className="text-xs font-semibold text-red-400 mb-0.5">Submission Failed</p>
-            <p className="text-xs text-red-300">{error}</p>
+          <div className="rounded p-3 bg-[#FEE2E2] border border-[#FCA5A5] text-xs text-[#991B1B]">
+            <strong>Submission Error:</strong> {error}
           </div>
         )}
 
-        {/* Submit */}
+        {/* Submit button */}
         <button
           type="submit"
           disabled={submitting}
           id="submit-payment-btn"
-          className="w-full py-3 rounded-xl font-semibold text-sm bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-60 disabled:cursor-not-allowed text-white transition-all duration-200 hover:shadow-lg hover:shadow-blue-900/30 active:scale-[0.98]"
+          className="w-full py-2.5 rounded bg-[#123B6D] hover:bg-[#0A2240] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
         >
-          {submitting ? "Submitting…" : "Submit Payment & Run AI Analysis"}
+          {submitting ? "Processing Automated Compliance Checks…" : "Submit Bill & Execute AI Statutory Scan"}
         </button>
       </form>
     </div>

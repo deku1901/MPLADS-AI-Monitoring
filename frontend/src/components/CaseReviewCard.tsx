@@ -95,90 +95,77 @@ export default function CaseReviewCard({
   }
 
   return (
-    <div className="card border-amber-500/40 bg-[var(--bg-elevated)] space-y-6 slide-down">
-      {/* ── Case Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold font-mono text-amber-400">
-              {caseData.case_id}
-            </span>
-            <span
-              className={`pill ${
-                isResolved
-                  ? "pill-approved"
-                  : caseData.status.includes("ESCALATED")
-                  ? "pill-held"
-                  : "pill-accent"
-              }`}
-            >
-              {caseData.status.replace(/_/g, " ")}
-            </span>
-          </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            Project: <span className="font-mono text-slate-300">{caseData.project_id}</span>
-          </p>
+    <div className="card border-[#D5DCE5] bg-white space-y-5 shadow-xs">
+      {/* Case Header */}
+      <div className="card-header flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-base font-bold font-mono text-[#0A2240] bg-[#E2E8F0] px-2 py-0.5 rounded border border-[#CBD5E1]">
+            {caseData.case_id}
+          </span>
+          <span
+            className={`pill ${
+              isResolved
+                ? "pill-approved"
+                : caseData.status.includes("ESCALATED")
+                ? "pill-held"
+                : "pill-accent"
+            }`}
+          >
+            {caseData.status.replace(/_/g, " ")}
+          </span>
         </div>
 
         {/* SLA Countdown pill */}
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold border ${
             isResolved
-              ? "border-green-800/40 bg-green-950/30 text-green-400"
+              ? "border-[#86EFAC] bg-[#DCFCE7] text-[#166534]"
               : deadline.isUrgent
-              ? "border-red-800/60 bg-red-950/40 text-red-300 animate-pulse"
-              : "border-amber-800/50 bg-amber-950/30 text-amber-300"
+              ? "border-[#FCA5A5] bg-[#FEE2E2] text-[#991B1B]"
+              : "border-[#FCD34D] bg-[#FEF3C7] text-[#92400E]"
           }`}
         >
-          <span>⏱️ SLA Response Window:</span>
+          <span>⏱️ SLA Window:</span>
           <span>{isResolved ? "Case Resolved" : deadline.text}</span>
         </div>
       </div>
 
-      {/* ── Case Meta Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        <div className="bg-[var(--bg-base)] p-3 rounded-lg border border-[var(--border-strong)] space-y-1">
-          <p className="text-[var(--text-muted)] uppercase tracking-wide font-semibold">
-            Assigned Authority Tier
-          </p>
-          <p className="text-sm font-bold text-slate-200">
+      {/* Case Meta Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div className="bg-[#F8FAFC] p-2.5 rounded border border-[#E2E8F0] space-y-0.5">
+          <p className="text-[#64748B] uppercase font-bold text-[10px]">Assigned Authority Tier</p>
+          <p className="font-bold text-[#0F172A]">
             {caseData.assigned_tier || "DA"} Tier ({caseData.assigned_to_authority_id || "AUTH-DA-01"})
           </p>
         </div>
 
-        <div className="bg-[var(--bg-base)] p-3 rounded-lg border border-[var(--border-strong)] space-y-1">
-          <p className="text-[var(--text-muted)] uppercase tracking-wide font-semibold">
-            Risk at Creation
-          </p>
-          <p className="text-sm font-bold text-red-400 tabular-nums">
+        <div className="bg-[#F8FAFC] p-2.5 rounded border border-[#E2E8F0] space-y-0.5">
+          <p className="text-[#64748B] uppercase font-bold text-[10px]">Risk Score at Creation</p>
+          <p className="font-bold font-mono text-[#B3261E]">
             {caseData.risk_score_at_creation ?? "—"} / 100
           </p>
         </div>
 
-        <div className="bg-[var(--bg-base)] p-3 rounded-lg border border-[var(--border-strong)] space-y-1">
-          <p className="text-[var(--text-muted)] uppercase tracking-wide font-semibold">
-            Created At
-          </p>
-          <p className="text-sm text-slate-200">
-            {formatDate(caseData.created_at)}
-          </p>
+        <div className="bg-[#F8FAFC] p-2.5 rounded border border-[#E2E8F0] space-y-0.5">
+          <p className="text-[#64748B] uppercase font-bold text-[10px]">Case Initiation Timestamp</p>
+          <p className="font-semibold text-[#0F172A]">{formatDate(caseData.created_at)}</p>
         </div>
       </div>
 
-      {/* ── Multi-Tier Escalation Ladder ── */}
+      {/* Escalation Tracker Ladder */}
       <EscalationTracker caseData={caseData} />
 
-      {/* ── Reason Codes ── */}
+      {/* Flagged reasons */}
       {caseData.reason_codes && caseData.reason_codes.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-            Flagged Anomaly Triggers
+        <div className="space-y-1">
+          <p className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider">
+            Flagged Violation Codes
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {caseData.reason_codes.map((code) => (
               <span
                 key={code}
-                className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-red-950/60 text-red-300 border border-red-800/50"
+                className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[#FEE2E2] text-[#991B1B] border border-[#FCA5A5]"
               >
                 ⚠️ {code}
               </span>
@@ -187,48 +174,48 @@ export default function CaseReviewCard({
         </div>
       )}
 
-      {/* ── AI Explanation Narrative ── */}
+      {/* AI Explanation Narrative */}
       {caseData.ai_explanation && (
-        <div className="rounded-lg bg-blue-950/30 border border-blue-800/40 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 uppercase tracking-wide">
+        <div className="rounded bg-[#EFF6FF] border border-[#BFDBFE] p-3.5 space-y-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#1D4ED8] uppercase tracking-wide">
             <span>🤖</span>
-            <span>AI Automated Case Explanation</span>
+            <span>AI Automated Statutory Decision-Support Explanation</span>
           </div>
-          <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
+          <p className="text-xs text-[#1E293B] whitespace-pre-line leading-relaxed">
             {caseData.ai_explanation}
           </p>
         </div>
       )}
 
-      {/* ── Prior Evidence History ── */}
+      {/* Evidence submission history */}
       {caseData.evidence_submissions && caseData.evidence_submissions.length > 0 && (
-        <div className="space-y-3 border-t border-[var(--border)] pt-4">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-            Evidence Submission History
+        <div className="space-y-2 pt-2 border-t border-[#E2E8F0]">
+          <p className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider">
+            Prior Evidence &amp; Action Log
           </p>
           <div className="space-y-2">
             {caseData.evidence_submissions.map((ev) => (
               <div
                 key={ev.evidence_id}
-                className="bg-[var(--bg-base)] p-3 rounded-lg border border-[var(--border-strong)] text-xs space-y-1"
+                className="bg-[#F8FAFC] p-3 rounded border border-[#CBD5E1] text-xs space-y-1"
               >
-                <div className="flex justify-between items-center text-[var(--text-muted)]">
-                  <span className="font-mono font-semibold text-slate-300">
-                    {ev.evidence_id} by {ev.submitted_by}
+                <div className="flex justify-between items-center text-[#64748B]">
+                  <span className="font-mono font-bold text-[#0F172A]">
+                    {ev.evidence_id} ({ev.submitted_by})
                   </span>
                   <span>{formatDate(ev.submitted_at)}</span>
                 </div>
                 {ev.content_text && (
-                  <p className="text-slate-300 italic">{ev.content_text}</p>
+                  <p className="text-[#334155] italic">&quot;{ev.content_text}&quot;</p>
                 )}
                 {ev.llm_summary && (
-                  <p className="text-blue-300 font-medium">
+                  <p className="text-[#1D4ED8] font-medium">
                     AI Summary: {ev.llm_summary}
                   </p>
                 )}
-                <div className="text-[11px] text-[var(--text-muted)]">
+                <div className="text-[11px] text-[#64748B]">
                   Risk Re-evaluation: {ev.risk_score_before} →{" "}
-                  <span className="font-bold text-green-400">
+                  <span className="font-bold text-[#15803D]">
                     {ev.risk_score_after}
                   </span>
                 </div>
@@ -238,28 +225,21 @@ export default function CaseReviewCard({
         </div>
       )}
 
-      {/* ── Evidence Submission Form (Only if not already resolved) ── */}
+      {/* Evidence Form */}
       {!isResolved && (
         <form
           onSubmit={handleEvidenceSubmit}
-          className="border-t border-[var(--border)] pt-5 space-y-4"
+          className="border-t border-[#E2E8F0] pt-4 space-y-4"
         >
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-200">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0A2240]">
             <span>📝</span>
-            <span>Submit Authority Justification / Evidence</span>
+            <span>SUBMIT AUTHORITY JUSTIFICATION &amp; REVISED SANCTION</span>
           </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            As the assigned authority, submit technical justification and supporting
-            documentation to trigger an automated AI re-evaluation and risk reduction.
-          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="authority-id"
-                className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-              >
-                Authority ID
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label htmlFor="authority-id" className="text-xs font-bold text-[#334155] uppercase">
+                Officer ID / Authority
               </label>
               <input
                 id="authority-id"
@@ -267,22 +247,19 @@ export default function CaseReviewCard({
                 value={submitterId}
                 onChange={(e) => setSubmitterId(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-medium focus:ring-1 focus:ring-[#123B6D]"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="authority-role"
-                className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-              >
+            <div className="space-y-1">
+              <label htmlFor="authority-role" className="text-xs font-bold text-[#334155] uppercase">
                 Authority Role
               </label>
               <select
                 id="authority-role"
                 value={submitterRole}
                 onChange={(e) => setSubmitterRole(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-1.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] font-medium focus:ring-1 focus:ring-[#123B6D]"
               >
                 <option value="DA">District Authority (DA)</option>
                 <option value="SNA">State Nodal Authority (SNA)</option>
@@ -291,57 +268,49 @@ export default function CaseReviewCard({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="justification-text"
-              className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-            >
-              Technical Justification Narrative
+          <div className="space-y-1">
+            <label htmlFor="justification-text" className="text-xs font-bold text-[#334155] uppercase">
+              Technical Justification Narrative <span className="text-red-600">*</span>
             </label>
             <textarea
               id="justification-text"
-              rows={4}
+              rows={3}
               value={justificationText}
               onChange={(e) => setJustificationText(e.target.value)}
               required
-              className="w-full p-3 rounded-lg bg-[var(--bg-base)] border border-[var(--border-strong)] text-sm text-slate-200 focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
-              placeholder="Enter site verification details, geo-location confirmation, revised sanction justification..."
+              className="w-full p-2.5 rounded border border-[#CBD5E1] bg-white text-xs text-[#0F172A] leading-relaxed focus:ring-1 focus:ring-[#123B6D]"
             />
           </div>
 
-          {/* Optional Attachment */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="evidence-attachment"
-              className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide"
-            >
-              Attach Inspection Report / Supporting Image (Optional)
+          {/* Attachment */}
+          <div className="space-y-1">
+            <label htmlFor="evidence-attachment" className="text-xs font-bold text-[#334155] uppercase">
+              Supporting Field Inspection Order / Photo (Optional)
             </label>
-            <label
-              htmlFor="evidence-attachment"
-              className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-                evidenceFile
-                  ? "border-green-600/60 bg-green-950/20"
-                  : "border-[var(--border-strong)] bg-[var(--bg-base)] hover:border-blue-500"
-              }`}
-            >
-              <span className="text-lg">{evidenceFile ? "📄" : "📎"}</span>
-              <span className="text-sm text-[var(--text-secondary)] truncate">
-                {evidenceFile ? evidenceFile.name : "Attach site inspection document or photo (JPEG/PNG)"}
-              </span>
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="evidence-attachment"
+                className={`flex-1 flex items-center justify-between px-3 py-1.5 rounded border cursor-pointer text-xs ${
+                  evidenceFile
+                    ? "border-[#86EFAC] bg-[#F0FDF4] text-[#166534]"
+                    : "border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC]"
+                }`}
+              >
+                <span>{evidenceFile ? `📄 ${evidenceFile.name}` : "Attach field report (JPEG/PNG/PDF)..."}</span>
+                <span className="px-2 py-0.5 rounded bg-[#E2E8F0] text-[#1E293B] font-bold text-[10px]">
+                  Browse
+                </span>
+              </label>
               {evidenceFile && (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setEvidenceFile(null);
-                  }}
-                  className="ml-auto text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors"
+                  onClick={() => setEvidenceFile(null)}
+                  className="text-xs text-red-600 hover:underline cursor-pointer"
                 >
-                  ✕
+                  Clear
                 </button>
               )}
-            </label>
+            </div>
             <input
               id="evidence-attachment"
               type="file"
@@ -351,31 +320,29 @@ export default function CaseReviewCard({
             />
           </div>
 
-          {/* Reduce Duplicate Signal Flag */}
-          <label
-            htmlFor="reduce-duplicate-flag"
-            className="flex items-start gap-3 cursor-pointer rounded-lg border border-[var(--border-strong)] bg-[var(--bg-base)] p-3 hover:border-blue-500 transition-colors"
-          >
-            <input
-              id="reduce-duplicate-flag"
-              type="checkbox"
-              checked={reducesDuplicate}
-              onChange={(e) => setReducesDuplicate(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded accent-blue-500"
-            />
-            <div>
-              <p className="text-xs font-semibold text-slate-200">
-                Accept technical justification as addressing duplicate/cost flags
-              </p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Instructs AI re-evaluation engine to recalculate risk taking verified site differences into account.
-              </p>
-            </div>
-          </label>
+          <div className="p-2.5 rounded bg-[#F8FAFC] border border-[#CBD5E1]">
+            <label htmlFor="reduce-duplicate-flag" className="flex items-start gap-2 cursor-pointer">
+              <input
+                id="reduce-duplicate-flag"
+                type="checkbox"
+                checked={reducesDuplicate}
+                onChange={(e) => setReducesDuplicate(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded accent-[#123B6D]"
+              />
+              <div>
+                <p className="text-xs font-bold text-[#0F172A]">
+                  Accept field verification as satisfying duplicate &amp; estimate criteria
+                </p>
+                <p className="text-[11px] text-[#64748B]">
+                  Instructs AI engine to recompute composite risk and clear statutory payment hold.
+                </p>
+              </div>
+            </label>
+          </div>
 
           {error && (
-            <div className="rounded-lg bg-red-950/50 border border-red-800/60 px-4 py-3 text-xs text-red-300">
-              <span className="font-semibold text-red-400">Error:</span> {error}
+            <div className="rounded p-2.5 bg-[#FEE2E2] border border-[#FCA5A5] text-xs text-[#991B1B]">
+              <strong>Error:</strong> {error}
             </div>
           )}
 
@@ -383,9 +350,9 @@ export default function CaseReviewCard({
             type="submit"
             disabled={submitting}
             id="submit-evidence-btn"
-            className="w-full py-3 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg shadow-blue-950/40"
+            className="w-full py-2.5 rounded bg-[#123B6D] hover:bg-[#0A2240] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
           >
-            {submitting ? "Submitting & Re-evaluating AI Risk…" : "Submit Justification & Trigger AI Re-evaluation"}
+            {submitting ? "Re-Evaluating Statutory Risk…" : "Submit Authority Review & Recompute Risk"}
           </button>
         </form>
       )}

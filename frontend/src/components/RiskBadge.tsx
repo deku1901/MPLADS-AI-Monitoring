@@ -5,63 +5,65 @@ import { useMemo } from "react";
 interface RiskBadgeProps {
   score: number;
   size?: "sm" | "md" | "lg";
-  /** Show pulsing animation when in high-risk state */
   pulse?: boolean;
 }
 
 /**
- * Displays a risk score with colour-coded label.
- * Low 0-39 → green | Medium 40-69 → amber | High 70-100 → red
+ * Government Administrative Risk Score Badge.
+ * Color standard: Low 0-39 (Green) | Medium 40-69 (Amber) | High 70-100 (Red)
  */
 export default function RiskBadge({ score, size = "md", pulse = false }: RiskBadgeProps) {
-  const { label, colorClass, bgClass, ringClass } = useMemo(() => {
+  const { label, colorClass, bgClass, borderClass, levelTag } = useMemo(() => {
     if (score >= 70)
       return {
-        label: "HIGH RISK",
-        colorClass: "text-red-400",
-        bgClass: "bg-red-950/60",
-        ringClass: "ring-red-500/40",
+        label: "CRITICAL ACTION REQUIRED",
+        colorClass: "text-[#B3261E]",
+        bgClass: "bg-[#FEE2E2]",
+        borderClass: "border-[#F87171]",
+        levelTag: "HIGH / CRITICAL",
       };
     if (score >= 40)
       return {
-        label: "MEDIUM RISK",
-        colorClass: "text-amber-400",
-        bgClass: "bg-amber-950/60",
-        ringClass: "ring-amber-500/40",
+        label: "ATTENTION REQUIRED",
+        colorClass: "text-[#B45309]",
+        bgClass: "bg-[#FEF3C7]",
+        borderClass: "border-[#FCD34D]",
+        levelTag: "MEDIUM RISK",
       };
     return {
-      label: "LOW RISK",
-      colorClass: "text-green-400",
-      bgClass: "bg-green-950/60",
-      ringClass: "ring-green-500/40",
+      label: "STATUTORY NORMAL",
+      colorClass: "text-[#15803D]",
+      bgClass: "bg-[#DCFCE7]",
+      borderClass: "border-[#86EFAC]",
+      levelTag: "LOW RISK",
     };
   }, [score]);
 
-  const sizeClasses = {
-    sm: { number: "text-2xl", label: "text-[9px]", wrap: "w-16 h-16" },
-    md: { number: "text-4xl", label: "text-[10px]", wrap: "w-24 h-24" },
-    lg: { number: "text-6xl", label: "text-xs",    wrap: "w-36 h-36" },
-  }[size];
+  if (size === "sm") {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border ${bgClass} ${borderClass}`}>
+        <span className={`text-xs font-bold font-mono ${colorClass}`}>{score}/100</span>
+        <span className={`text-[10px] font-bold uppercase ${colorClass}`}>● {levelTag}</span>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={`
-        ${sizeClasses.wrap}
-        ${bgClass}
-        ${colorClass}
-        ring-2 ${ringClass}
-        rounded-full
-        flex flex-col items-center justify-center gap-0.5
-        transition-all duration-700 ease-in-out
-        ${pulse ? "risk-pulse" : ""}
-      `}
-    >
-      <span className={`${sizeClasses.number} font-bold tabular-nums leading-none`}>
-        {score}
-      </span>
-      <span className={`${sizeClasses.label} font-semibold tracking-widest opacity-80`}>
-        {label}
-      </span>
+    <div className={`w-full max-w-xs p-4 rounded-md border text-center ${bgClass} ${borderClass} shadow-2xs`}>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-[#475569] mb-1">
+        AI COMPOSITE RISK SCORE
+      </p>
+      <div className="flex items-baseline justify-center gap-1 my-1">
+        <span className={`text-4xl md:text-5xl font-black font-mono tracking-tight ${colorClass} ${pulse ? "animate-pulse" : ""}`}>
+          {score}
+        </span>
+        <span className="text-sm font-bold text-[#64748B]">/ 100</span>
+      </div>
+      <div className="mt-2 pt-2 border-t border-black/10">
+        <span className={`inline-block text-[11px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded ${colorClass}`}>
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
