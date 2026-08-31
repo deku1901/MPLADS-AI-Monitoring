@@ -37,8 +37,14 @@ logger = logging.getLogger("api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup & shutdown lifecycle."""
-    logger.info("Initializing MPLADS AI Platform (Vertical Slice 1)...")
+    logger.info("Initializing MPLADS AI Platform...")
     create_tables()
+    # Auto-seed database if empty on fresh cloud deployment
+    from database import SessionLocal
+    with SessionLocal() as db:
+        if db.query(Project).count() == 0:
+            logger.info("Fresh deployment detected: auto-seeding multi-state demo dataset...")
+            reset_and_seed_db(db)
     scheduler = start_scheduler()
     yield
     logger.info("Shutting down MPLADS AI Platform...")

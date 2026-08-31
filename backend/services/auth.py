@@ -12,10 +12,13 @@ persona profiles mapped directly to the active database entities:
 
 from __future__ import annotations
 import logging
+import json
+import base64
+import hmac
+import hashlib
 from datetime import datetime, timedelta
 from typing import Any
 
-from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from config import settings
@@ -26,6 +29,33 @@ logger = logging.getLogger("auth")
 SECRET_KEY = getattr(settings, "JWT_SECRET_KEY", "mplads-ai-demo-secret-key-2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours for demo
+
+# Try importing jose / pyjwt with pure-python fallback
+_jwt_lib = None
+try:
+    from jose import jwt as _jose_jwt
+    _jwt_lib = _jose_jwt
+except ImportError:
+    try:
+        import jwt as _pyjwt
+        _jwt_lib = _pyjwt
+    except ImportError:
+        _jwt_lib = None
+
+
+def _base64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+
+def _fallback_jwt_encode(payload: dict, secret: str) -> str:
+    header = {"alg": "HS256", "typ": "JWT"}
+    header_b64 = _base64url_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+    payload_clean = {k: v.isoformat() if isinstance(v, datetime) else v for k, v in payload.items()}
+    payload_b64 = _base64url_encode(json.dumps(payload_clean, separators=(',', ':')).encode('utf-8'))
+    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+    sig = hmac.new(secret.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    sig_b64 = _base64url_encode(sig)
+    return f"{header_b64}.{payload_b64}.{sig_b64}"
 
 PERSONA_CATALOG = [
     {
@@ -86,8 +116,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    if _jwt_lib is not None:
+        try:
+            return _jwt_lib.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        except Exception:
+            pass
+    return _fallback_jwt_encode(to_encode, SECRET_KEY)
 
 
 def get_personas(db: Session | None = None) -> list[dict[str, Any]]:
