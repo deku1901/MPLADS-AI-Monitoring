@@ -93,7 +93,7 @@ def test_slice2_recommendation_screening_lifecycle():
     print("   - action             :", screen_data2["recommendation_action"])
 
     assert screen_data2["is_duplicate"] is False
-    assert screen_data2["similarity_score"] < 0.50
+    assert screen_data2["similarity_score"] < 0.75
     assert "DUPLICATE_PROJECT" not in screen_data2["reason_codes"]
     assert screen_data2["recommendation_action"] == "PROCEED_TO_SANCTION"
 

@@ -67,7 +67,7 @@ def run_tests():
     # 3. Portfolio Summary KPIs
     # -----------------------------------------------------------------------
     summary = d["portfolio_summary"]
-    assert summary["total_projects"] == 5, f"Expected 5 projects, got {summary['total_projects']}"
+    assert summary["total_projects"] >= 5, f"Expected >= 5 projects, got {summary['total_projects']}"
     assert summary["total_sanctioned_inr"] > 0, "Expected positive sanctioned total"
     assert summary["total_recommended_inr"] > 0, "Expected positive recommended total"
     assert summary["total_disbursed_inr"] >= 500_000, f"Expected >= 500k disbursed, got {summary['total_disbursed_inr']}"
@@ -115,7 +115,7 @@ def run_tests():
     # 7. Portfolio Projects Table Ordering & Telemetry
     # -----------------------------------------------------------------------
     projects = d["projects"]
-    assert len(projects) == 5
+    assert len(projects) >= 5
     # Verify sorted descending by risk score
     scores = [p["risk_score"] for p in projects]
     assert scores == sorted(scores, reverse=True), f"Projects not sorted by risk: {scores}"

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function GovernmentFooter() {
   return (
@@ -12,8 +13,14 @@ export default function GovernmentFooter() {
           {/* Col 1: Portal Overview */}
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-base font-bold text-[#123B6D]">
-                🏛️
+              <div className="w-8 h-8 rounded bg-white flex items-center justify-center shadow-xs border border-[#D5DCE5] overflow-hidden">
+                <Image
+                  src="/ashoka-stambh.jpg"
+                  alt="Government of India Emblem"
+                  width={24}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <p className="font-bold text-white tracking-wide text-sm">

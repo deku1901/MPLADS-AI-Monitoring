@@ -248,11 +248,15 @@ export interface CitizenProjectSummary {
   location_text: string | null;
   lat: number | null;
   lon: number | null;
+  state?: string | null;
+  constituency?: string | null;
   status: string;
   sanctioned_amount_inr: number | null;
   citizen_verification_status: "VERIFIED_FUNCTIONAL" | "UNVERIFIED" | "INSPECTION_REQUIRED" | string;
   positive_reports_count: number;
   negative_reports_count: number;
+  citizen_satisfaction_pct?: number | null;
+  citizen_reports_count?: number | null;
 }
 
 export interface CitizenReportResponse {
@@ -346,7 +350,7 @@ export interface SatelliteAnalysisResponse {
   ai_estimated_progress_pct: number;
   reported_progress_pct: number;
   mismatch_pct: number;
-  is_mismatch: bool | boolean;
+  is_mismatch: boolean;
   confidence_score: number;
   resolution_meters: number;
   sensor: string;
@@ -687,5 +691,508 @@ export interface SimulateNoResponseResponse {
   at_maximum_tier: boolean;
   message: string;
 }
+
+// ---------------------------------------------------------------------------
+// Authentication & Personas
+// ---------------------------------------------------------------------------
+
+export interface UserPersona {
+  user_id: string;
+  name: string;
+  role: "MP" | "DA" | "SNA" | "MINISTRY" | "CITIZEN";
+  designation: string;
+  jurisdiction: string;
+  email?: string | null;
+  avatar_emoji?: string;
+  default_route?: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: UserPersona;
+}
+
+// ---------------------------------------------------------------------------
+// F17 Completion Verification
+// ---------------------------------------------------------------------------
+
+export interface CompletionSignalBreakdown {
+  physical_progress_score: number;
+  satellite_evidence_score: number;
+  perceptual_image_score: number;
+  citizen_feedback_score: number;
+  financial_audit_score: number;
+  overall_confidence_score: number;
+  verdict: "VERIFIED" | "COMPLETION_DISPUTED";
+  reason_codes: string[];
+}
+
+export interface CompletionVerifyResponse {
+  project_id: string;
+  previous_status: string;
+  new_status: string;
+  is_verified: boolean;
+  verification_score: number;
+  signals: CompletionSignalBreakdown;
+  case_id?: string | null;
+  audit_event_id?: string | null;
+  message: string;
+  verified_at?: string | null;
+}
+
+export interface CompletionDossierResponse {
+  project_id: string;
+  title: string;
+  category: string;
+  constituency: string;
+  state: string;
+  sanctioned_amount_inr: number;
+  disbursed_amount_inr: number;
+  status: string;
+  completion_date?: string | null;
+  reported_progress_pct?: number | null;
+  ai_satellite_pct?: number | null;
+  citizen_satisfaction_pct?: number | null;
+  is_duplicate_photo_detected: boolean;
+  active_cases: Array<{ case_id: string; status: string; reason_codes?: string[] }>;
+  signals?: CompletionSignalBreakdown | null;
+}
+
+// ---------------------------------------------------------------------------
+// MP Constituency Dashboard
+// ---------------------------------------------------------------------------
+
+export interface MPInfo {
+  mp_id: string;
+  name: string;
+  mp_type: string;
+  constituency: string;
+  state: string;
+  annual_budget_inr: number;
+}
+
+export interface MPBudgetSummary {
+  annual_budget_inr: number;
+  total_sanctioned_inr: number;
+  total_disbursed_inr: number;
+  unspent_balance_inr: number;
+  sanctioned_utilization_pct: number;
+  disbursed_utilization_pct: number;
+}
+
+export interface MPPipeline {
+  recommended: number;
+  sanctioned: number;
+  execution: number;
+  completed: number;
+  verified: number;
+  inspection_required: number;
+}
+
+export interface MPStatutoryCompliance {
+  sc_spend_pct: number;
+  st_spend_pct: number;
+  sc_compliant: boolean;
+  st_compliant: boolean;
+  sc_threshold_pct: number;
+  st_threshold_pct: number;
+}
+
+export interface MPRiskSummary {
+  average_risk_score: number;
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+  open_cases_count: number;
+}
+
+export interface MPCitizenSummary {
+  total_reports: number;
+  positive_reports: number;
+  negative_reports: number;
+  satisfaction_pct?: number | null;
+}
+
+export interface MPDashboardResponse {
+  mp: MPInfo;
+  budget_summary: MPBudgetSummary;
+  pipeline: MPPipeline;
+  statutory_compliance: MPStatutoryCompliance;
+  risk_summary: MPRiskSummary;
+  sector_breakdown: Array<{ category: string; count: number; sanctioned_inr: number; disbursed_inr: number }>;
+  citizen_summary: MPCitizenSummary;
+  open_cases: Array<{
+    case_id: string;
+    project_id: string;
+    assigned_tier: string;
+    status: string;
+    reason_codes: string[];
+    risk_score_at_creation: number;
+    sla_deadline?: string | null;
+  }>;
+  sla_pending_sanctions: Array<{
+    project_id: string;
+    title: string;
+    elapsed_days: number;
+    remaining_days: number;
+    overdue: boolean;
+  }>;
+  projects: Array<{
+    project_id: string;
+    title: string;
+    category: string;
+    location_text?: string | null;
+    status: string;
+    risk_score: number;
+    risk_tier: string;
+    recommended_amount_inr: number;
+    sanctioned_amount_inr: number;
+    disbursed_amount_inr: number;
+    reported_progress_pct?: number | null;
+    ai_evidence_pct?: number | null;
+    active_case_id?: string | null;
+    anomaly_flags: string[];
+    recommendation_date?: string | null;
+    sanction_date?: string | null;
+    completion_date?: string | null;
+  }>;
+  timestamp: string;
+}
+
+export interface MPListItem {
+  mp_id: string;
+  name: string;
+  mp_type: string;
+  constituency: string;
+  state: string;
+  total_projects: number;
+  avg_risk: number;
+}
+
+// ---------------------------------------------------------------------------
+// DA Operations Dashboard
+// ---------------------------------------------------------------------------
+
+export interface DAInfo {
+  authority_id: string;
+  name: string;
+  district: string;
+  state: string;
+  email?: string | null;
+}
+
+export interface DAPortfolioSummary {
+  total_projects: number;
+  total_sanctioned_inr: number;
+  total_disbursed_inr: number;
+  utilization_pct: number;
+  active_works: number;
+  completed_works: number;
+  inspection_required: number;
+}
+
+export interface DASLAItem {
+  project_id: string;
+  title: string;
+  category?: string | null;
+  recommended_amount_inr: number;
+  recommendation_date: string;
+  elapsed_days: number;
+  remaining_days: number;
+  overdue: boolean;
+  urgency: "CRITICAL" | "HIGH" | "NORMAL";
+}
+
+export interface DAPaymentHoldItem {
+  payment_id: string;
+  project_id: string;
+  project_title: string;
+  requested_amount_inr: number;
+  ai_risk_score: number;
+  check_result: Record<string, unknown>;
+  submitted_by: string;
+  request_date?: string | null;
+}
+
+export interface DACaseItem {
+  case_id: string;
+  project_id: string;
+  project_title: string;
+  status: string;
+  reason_codes: string[];
+  risk_score_at_creation: number;
+  response_deadline?: string | null;
+  time_remaining_seconds?: number | null;
+  is_overdue: boolean;
+  escalation_count: number;
+}
+
+export interface DADashboardResponse {
+  da: DAInfo;
+  portfolio_summary: DAPortfolioSummary;
+  sla_queue: {
+    pending_sanctions_count: number;
+    sla_breaches_count: number;
+    items: DASLAItem[];
+  };
+  payment_holds: {
+    total_holds: number;
+    items: DAPaymentHoldItem[];
+  };
+  cases: {
+    total_open: number;
+    overdue_count: number;
+    items: DACaseItem[];
+  };
+  risk_summary: {
+    average_risk_score: number;
+    low: number;
+    medium: number;
+    high: number;
+    critical: number;
+  };
+  critical_alerts: Array<{
+    project_id: string;
+    title: string;
+    risk_score: number;
+    risk_tier: string;
+    status: string;
+    sanctioned_amount_inr: number;
+  }>;
+  projects: Array<{
+    project_id: string;
+    title: string;
+    category: string;
+    constituency?: string | null;
+    status: string;
+    risk_score: number;
+    risk_tier: string;
+    sanctioned_amount_inr: number;
+    active_case_id?: string | null;
+    anomaly_flags: string[];
+  }>;
+  recent_activity: Array<{
+    event_id: string;
+    event_type: string;
+    project_id?: string | null;
+    description: string;
+    timestamp?: string | null;
+  }>;
+  timestamp: string;
+}
+
+export interface DAListItem {
+  authority_id: string;
+  name: string;
+  district: string;
+  state: string;
+}
+
+// ---------------------------------------------------------------------------
+// SNA Dashboard
+// ---------------------------------------------------------------------------
+
+export interface SNAInfo {
+  authority_id: string;
+  name: string;
+  state: string;
+  email?: string | null;
+}
+
+export interface DistrictLeaderboardItem {
+  constituency: string;
+  total_projects: number;
+  sanctioned_inr: number;
+  disbursed_inr: number;
+  utilization_pct: number;
+  avg_risk_score: number;
+  inspection_required_count: number;
+  open_cases_count: number;
+  sla_compliance_pct: number;
+  performance_score: number;
+}
+
+export interface SNADashboardResponse {
+  sna: SNAInfo;
+  portfolio_summary: {
+    total_projects: number;
+    total_sanctioned_inr: number;
+    total_disbursed_inr: number;
+    utilization_pct: number;
+    active_works: number;
+    completed_works: number;
+    inspection_required: number;
+    recommended_pending: number;
+  };
+  risk_summary: {
+    average_risk_score: number;
+    low: number;
+    medium: number;
+    high: number;
+    critical: number;
+    total_open_cases: number;
+    sna_escalations: number;
+    sna_escalation_overdue: number;
+  };
+  escalation_queue: Array<{
+    case_id: string;
+    project_id: string;
+    project_title?: string | null;
+    project_constituency?: string | null;
+    status: string;
+    reason_codes: string[];
+    risk_score_at_creation: number;
+    response_deadline?: string | null;
+    time_remaining_seconds?: number | null;
+    is_overdue: boolean;
+  }>;
+  district_leaderboard: DistrictLeaderboardItem[];
+  mp_compliance: Array<{
+    mp_id: string;
+    name: string;
+    mp_type: string;
+    constituency: string;
+    sc_spend_pct: number;
+    st_spend_pct: number;
+    sc_compliant: boolean;
+    st_compliant: boolean;
+    total_projects: number;
+    total_sanctioned_inr: number;
+  }>;
+  anomaly_hotspots: Array<{
+    project_id: string;
+    title: string;
+    constituency?: string | null;
+    risk_score: number;
+    risk_tier: string;
+    status: string;
+    sanctioned_amount_inr: number;
+  }>;
+  recent_activity: Array<{
+    event_id: string;
+    event_type: string;
+    project_id?: string | null;
+    description: string;
+    timestamp?: string | null;
+  }>;
+  timestamp: string;
+}
+
+export interface SNAListItem {
+  authority_id: string;
+  name: string;
+  state: string;
+}
+
+// ---------------------------------------------------------------------------
+// MoSPI National Dashboard
+// ---------------------------------------------------------------------------
+
+export interface StateMatrixItem {
+  state: string;
+  total_projects: number;
+  sanctioned_inr: number;
+  disbursed_inr: number;
+  utilization_pct: number;
+  avg_risk_score: number;
+  inspection_required_count: number;
+  open_cases_count: number;
+  sla_compliance_pct: number;
+  mps_count: number;
+  sc_compliant_mps: number;
+  st_compliant_mps: number;
+  performance_score: number;
+}
+
+export interface FiscalLedger {
+  total_portfolio_inr: number;
+  total_disbursed_inr: number;
+  total_held_inr: number;
+  total_unreleased_inr: number;
+  funds_at_risk_inr: number;
+  funds_at_risk_pct: number;
+  payment_holds_count: number;
+  mandatory_tender_enforcements: number;
+  citizen_disputes_count: number;
+}
+
+export interface MoSPIDashboardResponse {
+  national_kpis: {
+    total_projects: number;
+    total_states: number;
+    total_mps: number;
+    total_recommended_inr: number;
+    total_sanctioned_inr: number;
+    total_disbursed_inr: number;
+    overall_utilization_pct: number;
+    active_works: number;
+    completed_works: number;
+    inspection_required: number;
+    open_cases_count: number;
+  };
+  risk_summary: {
+    average_risk_score: number;
+    low: number;
+    medium: number;
+    high: number;
+    critical: number;
+    ministry_escalations: number;
+    ministry_overdue: number;
+  };
+  fiscal_ledger: FiscalLedger;
+  state_matrix: StateMatrixItem[];
+  mp_compliance: {
+    total_mps: number;
+    sc_compliant_count: number;
+    st_compliant_count: number;
+    non_compliant_mps: Array<{
+      mp_id: string;
+      name: string;
+      mp_type: string;
+      state: string;
+      constituency: string;
+      sc_spend_pct: number;
+      st_spend_pct: number;
+      sc_compliant: boolean;
+      st_compliant: boolean;
+    }>;
+  };
+  ministry_escalation_queue: Array<{
+    case_id: string;
+    project_id: string;
+    project_title?: string | null;
+    project_state?: string | null;
+    project_constituency?: string | null;
+    status: string;
+    reason_codes: string[];
+    risk_score_at_creation: number;
+    response_deadline?: string | null;
+    time_remaining_seconds?: number | null;
+    is_overdue: boolean;
+  }>;
+  national_hotspots: Array<{
+    project_id: string;
+    title: string;
+    state?: string | null;
+    constituency?: string | null;
+    risk_score: number;
+    risk_tier: string;
+    status: string;
+    sanctioned_amount_inr: number;
+    mandatory_tender: boolean;
+  }>;
+  recent_activity: Array<{
+    event_id: string;
+    event_type: string;
+    project_id?: string | null;
+    actor_role?: string | null;
+    description: string;
+    timestamp?: string | null;
+  }>;
+  timestamp: string;
+}
+
 
 

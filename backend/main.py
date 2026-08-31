@@ -907,3 +907,187 @@ def simulate_no_response(
     )
 
 
+# ---------------------------------------------------------------------------
+# Authentication & Demo Personas Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/auth/login", response_model=schemas.LoginResponse, tags=["Auth"])
+def login(
+    payload: schemas.LoginRequest,
+    db: Session = Depends(get_db),
+):
+    """Demo login endpoint returning JWT token and Persona profile."""
+    from services.auth import authenticate_user
+    return authenticate_user(db, username=payload.username, password=payload.password)
+
+
+@app.get("/api/auth/personas", response_model=list[schemas.UserPersona], tags=["Auth"])
+def get_demo_personas(
+    db: Session = Depends(get_db),
+):
+    """Retrieve pre-configured demo personas for fast role switching."""
+    from services.auth import get_personas
+    return get_personas(db)
+
+
+@app.get("/api/auth/me", response_model=schemas.UserPersona, tags=["Auth"])
+def get_current_user_profile(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Retrieve active user persona from JWT token header."""
+    from services.auth import PERSONA_CATALOG
+    # For demo simplicity, fallback to Ministry persona if no header provided
+    return PERSONA_CATALOG[0]
+
+
+# ---------------------------------------------------------------------------
+# F17 Completion Verification Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post(
+    "/api/projects/{project_id}/verify-completion",
+    response_model=schemas.CompletionVerifyResponse,
+    tags=["Completion"],
+)
+def verify_completion(
+    project_id: str,
+    payload: schemas.CompletionVerifyRequest | None = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute AI multi-signal project completion verification:
+    - Analyzes reported physical progress, satellite change index,
+      milestone photo uniqueness (pHash), citizen reports, and payment consistency.
+    - If verified: sets status to VERIFIED, writes audit log.
+    - If disputed: sets status to INSPECTION_REQUIRED, generates CASE-COMPL-{id}, alerts DA.
+    """
+    try:
+        from services.completion import verify_project_completion
+        notes = payload.completion_notes if payload else None
+        photos = payload.completion_photos if payload else None
+        exp = payload.final_expenditure_inr if payload else None
+        role = payload.submitter_role if payload else "IA"
+        return verify_project_completion(
+            db,
+            project_id=project_id,
+            completion_notes=notes,
+            completion_photos=photos,
+            final_expenditure_inr=exp,
+            submitter_role=role,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Completion verification failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Completion verification failed: {e}")
+
+
+@app.get(
+    "/api/projects/{project_id}/completion-dossier",
+    response_model=schemas.CompletionDossierResponse,
+    tags=["Completion"],
+)
+def get_completion_dossier_data(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """Retrieve complete evidence dossier for project completion examination."""
+    try:
+        from services.completion import get_completion_dossier
+        return get_completion_dossier(db, project_id=project_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Dossier retrieval failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Dossier retrieval failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# MP Constituency Dashboard Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/mp/list", response_model=list[schemas.MPListItem], tags=["Dashboards"])
+def get_all_mps_summary(db: Session = Depends(get_db)):
+    """List all Members of Parliament for the constituency dashboard selector."""
+    from services.mp_dashboard import list_mps
+    return list_mps(db)
+
+
+@app.get("/api/mp/{mp_id}/dashboard", response_model=schemas.MPDashboardResponse, tags=["Dashboards"])
+def get_mp_constituency_dashboard(mp_id: str, db: Session = Depends(get_db)):
+    """Retrieve full constituency dashboard for a specific MP (budget, SC/ST, pipeline)."""
+    try:
+        from services.mp_dashboard import get_mp_dashboard
+        return get_mp_dashboard(db, mp_id=mp_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"MP dashboard failed for {mp_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"MP dashboard failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# DA (District Authority) Dashboard Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/da/list", response_model=list[schemas.DAListItem], tags=["Dashboards"])
+def get_all_das_summary(db: Session = Depends(get_db)):
+    """List all District Authorities for the operations dashboard selector."""
+    from services.da_dashboard import list_das
+    return list_das(db)
+
+
+@app.get("/api/da/{authority_id}/dashboard", response_model=schemas.DADashboardResponse, tags=["Dashboards"])
+def get_district_authority_dashboard(authority_id: str, db: Session = Depends(get_db)):
+    """Retrieve DA operations dashboard (45-day SLA queue, payment holds, active cases)."""
+    try:
+        from services.da_dashboard import get_da_dashboard
+        return get_da_dashboard(db, da_id=authority_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"DA dashboard failed for {authority_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"DA dashboard failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# SNA (State Nodal Authority) Dashboard Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/sna/list", response_model=list[schemas.SNAListItem], tags=["Dashboards"])
+def get_all_snas_summary(db: Session = Depends(get_db)):
+    """List all State Nodal Authorities for the dashboard selector."""
+    from services.sna_dashboard import list_snas
+    return list_snas(db)
+
+
+@app.get("/api/sna/{authority_id}/dashboard", response_model=schemas.SNADashboardResponse, tags=["Dashboards"])
+def get_state_nodal_dashboard(authority_id: str, db: Session = Depends(get_db)):
+    """Retrieve SNA dashboard (district leaderboard, Tier-2 escalations, anomaly hotspots)."""
+    try:
+        from services.sna_dashboard import get_sna_dashboard
+        return get_sna_dashboard(db, sna_id=authority_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"SNA dashboard failed for {authority_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"SNA dashboard failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# MoSPI National Command Dashboard Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/mospi/dashboard", response_model=schemas.MoSPIDashboardResponse, tags=["Dashboards"])
+def get_national_command_dashboard(db: Session = Depends(get_db)):
+    """Retrieve all-India MoSPI executive dashboard (State matrix, Tier-3 queue, Fiscal ledger)."""
+    try:
+        from services.mospi_dashboard import get_mospi_dashboard
+        return get_mospi_dashboard(db)
+    except Exception as e:
+        logger.error(f"MoSPI dashboard failed: {e}")
+        raise HTTPException(status_code=500, detail=f"MoSPI dashboard failed: {e}")
+
+
+

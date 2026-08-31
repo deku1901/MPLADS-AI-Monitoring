@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 
 export default function TopGovStrip() {
   const [fontSize, setFontSize] = useState<"normal" | "sm" | "lg">("normal");
@@ -20,11 +21,18 @@ export default function TopGovStrip() {
 
   return (
     <div className="w-full bg-[#0A2240] text-slate-200 text-[11px] border-b border-[#1E3A5F]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 h-8 flex items-center justify-between">
-        {/* Left: Government of India & Ministry */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 h-9 flex items-center justify-between">
+        {/* Left: Government of India & Ministry with Ashoka Stambh */}
         <div className="flex items-center gap-3">
+          <Image
+            src="/ashoka-stambh.jpg"
+            alt="Government of India — Ashoka Stambh"
+            width={22}
+            height={28}
+            className="object-contain brightness-110"
+            priority
+          />
           <div className="flex items-center gap-1.5 font-semibold tracking-wide">
-            <span className="text-sm">🇮🇳</span>
             <span className="text-white">भारत सरकार</span>
             <span className="text-slate-400">|</span>
             <span className="text-slate-100">Government of India</span>

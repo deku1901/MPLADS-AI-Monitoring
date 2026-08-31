@@ -146,6 +146,8 @@ export async function getCase(caseId: string): Promise<CaseDetail> {
   return request<CaseDetail>(`/api/cases/${caseId}`);
 }
 
+export const getCaseDetails = getCase;
+
 export async function submitEvidence(
   caseId: string,
   params: {
@@ -404,4 +406,98 @@ export async function simulateNoResponse(
     { method: "POST" }
   );
 }
+
+// ---------------------------------------------------------------------------
+// Authentication & Personas
+// ---------------------------------------------------------------------------
+
+export async function loginUser(username: string, password: string = "demo123"): Promise<import("./types").LoginResponse> {
+  return request<import("./types").LoginResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export async function getPersonas(): Promise<import("./types").UserPersona[]> {
+  return request<import("./types").UserPersona[]>("/api/auth/personas");
+}
+
+export async function getCurrentUser(): Promise<import("./types").UserPersona> {
+  return request<import("./types").UserPersona>("/api/auth/me");
+}
+
+// ---------------------------------------------------------------------------
+// F17 Completion Verification
+// ---------------------------------------------------------------------------
+
+export async function verifyCompletion(
+  projectId: string,
+  params?: {
+    completion_notes?: string;
+    completion_photos?: string[];
+    final_expenditure_inr?: number;
+    submitter_role?: string;
+  }
+): Promise<import("./types").CompletionVerifyResponse> {
+  return request<import("./types").CompletionVerifyResponse>(
+    `/api/projects/${projectId}/verify-completion`,
+    {
+      method: "POST",
+      body: JSON.stringify(params || {}),
+    }
+  );
+}
+
+export async function getCompletionDossier(
+  projectId: string
+): Promise<import("./types").CompletionDossierResponse> {
+  return request<import("./types").CompletionDossierResponse>(
+    `/api/projects/${projectId}/completion-dossier`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MP Constituency Dashboard
+// ---------------------------------------------------------------------------
+
+export async function getMpList(): Promise<import("./types").MPListItem[]> {
+  return request<import("./types").MPListItem[]>("/api/mp/list");
+}
+
+export async function getMpDashboard(mpId: string): Promise<import("./types").MPDashboardResponse> {
+  return request<import("./types").MPDashboardResponse>(`/api/mp/${mpId}/dashboard`);
+}
+
+// ---------------------------------------------------------------------------
+// DA Operations Dashboard
+// ---------------------------------------------------------------------------
+
+export async function getDaList(): Promise<import("./types").DAListItem[]> {
+  return request<import("./types").DAListItem[]>("/api/da/list");
+}
+
+export async function getDaDashboard(authorityId: string): Promise<import("./types").DADashboardResponse> {
+  return request<import("./types").DADashboardResponse>(`/api/da/${authorityId}/dashboard`);
+}
+
+// ---------------------------------------------------------------------------
+// SNA Dashboard
+// ---------------------------------------------------------------------------
+
+export async function getSnaList(): Promise<import("./types").SNAListItem[]> {
+  return request<import("./types").SNAListItem[]>("/api/sna/list");
+}
+
+export async function getSnaDashboard(authorityId: string): Promise<import("./types").SNADashboardResponse> {
+  return request<import("./types").SNADashboardResponse>(`/api/sna/${authorityId}/dashboard`);
+}
+
+// ---------------------------------------------------------------------------
+// MoSPI National Command Dashboard
+// ---------------------------------------------------------------------------
+
+export async function getMospiDashboard(): Promise<import("./types").MoSPIDashboardResponse> {
+  return request<import("./types").MoSPIDashboardResponse>("/api/mospi/dashboard");
+}
+
 

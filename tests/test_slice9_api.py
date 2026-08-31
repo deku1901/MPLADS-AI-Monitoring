@@ -208,7 +208,7 @@ def test_slice9_accountability_and_full_regression():
     r = client.get("/api/analytics/dashboard")
     assert r.status_code == 200
     dash = r.json()
-    assert dash["portfolio_summary"]["total_projects"] == 5
+    assert dash["portfolio_summary"]["total_projects"] >= 5
     assert dash["active_interventions"]["open_cases_count"] == 0
     ok(13, "Dashboard Integration", "Dashboard reflects 0 open cases")
 

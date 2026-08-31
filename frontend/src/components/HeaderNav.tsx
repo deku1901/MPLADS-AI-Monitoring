@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getNotifications } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import TopGovStrip from "@/components/TopGovStrip";
 
 interface HeaderNavProps {
@@ -20,7 +22,39 @@ export default function HeaderNav({
   isResetting = false,
 }: HeaderNavProps) {
   const pathname = usePathname();
+  const { user, switchPersona, personas } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Nav scroll state
+  const navRef = useRef<HTMLElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = navRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      ro.disconnect();
+    };
+  }, [updateScrollState]);
+
+  function scrollNav(direction: "left" | "right") {
+    const el = navRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === "left" ? -200 : 200, behavior: "smooth" });
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -49,47 +83,70 @@ export default function HeaderNav({
 
       {/* Level 2: Scheme & Authority Identity Banner */}
       <div className="border-b border-[#E2E8F0] bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
           {/* Scheme Emblem & Title */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-md bg-[#123B6D] flex items-center justify-center text-white text-2xl font-serif shadow-xs border border-[#0A2540]">
-              🏛️
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center shadow-xs border border-[#D5DCE5] overflow-hidden">
+              <Image
+                src="/ashoka-stambh.jpg"
+                alt="Government of India Emblem"
+                width={32}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-extrabold text-base md:text-lg text-[#0A2240] tracking-tight">
-                  MPLADS MONITORING &amp; DECISION PORTAL
+                <span className="font-extrabold text-sm md:text-base text-[#0A2240] tracking-tight">
+                  MPLADS AI MONITORING &amp; INTERVENTION PLATFORM
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#E8F5E9] text-[#166534] border border-[#86EFAC]">
-                  ● System Operational
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider bg-[#E8F5E9] text-[#166534] border border-[#86EFAC]">
+                  ● Live Oversight
                 </span>
               </div>
-              <p className="text-[11px] text-[#475569] font-medium">
-                Members of Parliament Local Area Development Scheme • MoSPI Administrative Decision-Support
+              <p className="text-[10px] text-[#475569] font-medium">
+                Ministry of Statistics and Programme Implementation (MoSPI) • Government of India
               </p>
             </div>
-          </div>
+          </Link>
 
-          {/* Authority Context, Alert Bell & Demo Control */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Active Authority Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-xs">
-              <span className="text-[10px] text-[#64748B] uppercase font-bold">Authority:</span>
-              <span className="font-semibold text-[#0F172A]">DA (Varanasi)</span>
-              <span className="text-[#94A3B8]">|</span>
-              <span className="text-[11px] font-mono text-[#0369A1] font-bold">{projectId}</span>
+          {/* Persona Switcher & Controls */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Active Persona Badge & Quick Switcher */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#F8FAFC] border border-[#CBD5E1] text-xs">
+              <span className="text-sm">{user?.avatar_emoji || "👤"}</span>
+              <div className="text-left leading-none">
+                <span className="text-[9px] text-[#64748B] font-bold uppercase block">{user?.role || "USER"}</span>
+                <span className="font-bold text-[11px] text-[#0F172A]">{user?.name?.split(" (")[0] || "Official"}</span>
+              </div>
+
+              {personas.length > 0 && (
+                <select
+                  value={user?.user_id || ""}
+                  onChange={(e) => switchPersona(e.target.value)}
+                  aria-label="Switch Stakeholder Persona"
+                  className="ml-1 text-[10px] py-0.5 px-1 rounded bg-white border border-[#CBD5E1] font-medium text-[#475569] cursor-pointer"
+                >
+                  {personas.map((p) => (
+                    <option key={p.user_id} value={p.user_id}>
+                      {p.role}: {p.name.split(" (")[0]}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Notification Alert Center */}
             <button
               onClick={onOpenNotifications}
-              className="relative px-3 py-1.5 rounded bg-white hover:bg-[#F8FAFC] border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="relative px-2.5 py-1.5 rounded bg-white hover:bg-[#F8FAFC] border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
               title="Open Official Authority Notification Center"
             >
               <span>🔔</span>
-              <span className="hidden md:inline">Alert Center</span>
+              <span className="hidden lg:inline text-[11px]">Alerts</span>
               {unreadCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-[#B3261E] text-white font-mono font-bold text-[10px]">
+                <span className="px-1.5 py-0.2 rounded-full bg-[#B3261E] text-white font-mono font-bold text-[9px]">
                   {unreadCount}
                 </span>
               )}
@@ -99,140 +156,192 @@ export default function HeaderNav({
             <button
               onClick={onResetDemo}
               disabled={isResetting}
-              className="px-3 py-1.5 rounded bg-[#FEF2F2] hover:bg-[#FEE2E2] border border-[#FCA5A5] text-[#991B1B] text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-2xs cursor-pointer"
-              title="Reset Database to Seed State (Risk 32)"
+              className="px-2.5 py-1.5 rounded bg-[#FEF2F2] hover:bg-[#FEE2E2] border border-[#FECACA] text-[#B91C1C] text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              title="Reset database to deterministic initial state"
             >
-              <span>🔄</span>
-              <span className="hidden sm:inline">
-                {isResetting ? "Resetting…" : "Reset State (Risk 32)"}
-              </span>
+              <span>{isResetting ? "⏳" : "🔄"}</span>
+              <span>{isResetting ? "Resetting…" : "Reset Demo"}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Level 3: Administrative Primary Navigation Strip */}
-      <div className="bg-[#123B6D] text-white">
+      {/* Level 3: Navigation Bar with Scroll Buttons */}
+      <div className="bg-[#123B6D] text-white text-xs font-medium border-b border-[#0A2240] relative">
+        {/* Left scroll button */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scrollNav("left")}
+            className="absolute left-0 top-0 bottom-0 z-10 flex items-center justify-center w-8 bg-gradient-to-r from-[#0A2240] to-transparent text-white/90 hover:text-white transition-colors cursor-pointer"
+            aria-label="Scroll navigation left"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M10.5 3L5.5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Right scroll button */}
+        {canScrollRight && (
+          <button
+            onClick={() => scrollNav("right")}
+            className="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center w-8 bg-gradient-to-l from-[#0A2240] to-transparent text-white/90 hover:text-white transition-colors cursor-pointer"
+            aria-label="Scroll navigation right"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5.5 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </button>
+        )}
+
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <nav className="flex items-center overflow-x-auto text-xs font-medium no-scrollbar">
+          <nav
+            ref={navRef}
+            className="flex items-center gap-1 overflow-x-auto py-1 scroll-smooth"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {/* Primary Role Dashboards */}
             <Link
-              href="/dashboard"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/dashboard" || pathname === "/"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              href="/national-dashboard"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/national-dashboard" ? "bg-[#0A2240] text-[#FACC15]" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>🏛️</span>
-              <span>Portfolio Command Center</span>
+              <span>MoSPI National</span>
             </Link>
 
             <Link
-              href={`/projects/${projectId}`}
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname?.includes("/projects")
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              href="/sna-dashboard"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/sna-dashboard" ? "bg-[#0A2240] text-[#FACC15]" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
-              <span>📋</span>
-              <span>1. Works &amp; Payment Firebreak</span>
+              <span>🏢</span>
+              <span>SNA State</span>
             </Link>
 
             <Link
-              href="/recommend"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/recommend"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              href="/da-dashboard"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/da-dashboard" ? "bg-[#0A2240] text-[#FACC15]" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
-              <span>🔎</span>
-              <span>2. Pre-Sanction Screening</span>
+              <span>⚖️</span>
+              <span>DA Operations</span>
+            </Link>
+
+            <Link
+              href="/mp-dashboard"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/mp-dashboard" ? "bg-[#0A2240] text-[#FACC15]" : "hover:bg-[#1E4E8C] text-slate-200"
+              }`}
+            >
+              <span>🇮🇳</span>
+              <span>MP Constituency</span>
             </Link>
 
             <Link
               href="/citizen"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/citizen"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-3 py-1.5 rounded text-[11px] font-bold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/citizen" ? "bg-[#0A2240] text-[#FACC15]" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>👥</span>
-              <span>3. Citizen Verification</span>
+              <span>Citizen Portal</span>
+            </Link>
+
+            <span className="h-4 w-px bg-white/20 mx-1 shrink-0" />
+
+            {/* AI Capability Modules */}
+            <Link
+              href="/dashboard"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/dashboard" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
+              }`}
+            >
+              <span>⚡</span>
+              <span>Command Matrix (F15)</span>
+            </Link>
+
+            <Link
+              href={`/projects/${projectId}`}
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname?.includes("/projects") ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
+              }`}
+            >
+              <span>💳</span>
+              <span>Firebreak &amp; F17</span>
+            </Link>
+
+            <Link
+              href="/recommend"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/recommend" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
+              }`}
+            >
+              <span>🔎</span>
+              <span>NLP Screening (F2)</span>
             </Link>
 
             <Link
               href="/split-work"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/split-work"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/split-work" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>🧩</span>
-              <span>4. Split-Work Compliance</span>
+              <span>Split-Work (F4)</span>
             </Link>
 
             <Link
               href="/satellite"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/satellite"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/satellite" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>🛰️</span>
-              <span>5. Satellite Verification</span>
+              <span>Satellite (F11)</span>
             </Link>
 
             <Link
               href="/delay"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/delay"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/delay" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>⏳</span>
-              <span>6. Delay Monitoring</span>
+              <span>Time Delay (F12)</span>
             </Link>
 
             <Link
               href="/financial"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/financial"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/financial" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>📈</span>
-              <span>7. Financial Analytics</span>
+              <span>Financials (F13)</span>
             </Link>
 
             <Link
               href="/cost-overrun"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/cost-overrun"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/cost-overrun" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>💰</span>
-              <span>8. Cost Overrun Detection</span>
+              <span>Cost Overrun (F14)</span>
             </Link>
 
             <Link
               href="/escalation"
-              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
-                pathname === "/escalation"
-                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
-                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              className={`px-2.5 py-1.5 rounded text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                pathname === "/escalation" ? "bg-[#0A2240] text-white font-bold" : "hover:bg-[#1E4E8C] text-slate-200"
               }`}
             >
               <span>⏱️</span>
-              <span>9. Accountability Clock</span>
+              <span>Escalations (F16)</span>
             </Link>
           </nav>
         </div>
@@ -240,4 +349,3 @@ export default function HeaderNav({
     </header>
   );
 }
-

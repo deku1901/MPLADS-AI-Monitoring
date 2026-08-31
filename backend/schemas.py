@@ -710,3 +710,330 @@ class SimulateNoResponseResponse(BaseModel):
     message: str
 
 
+# ---------------------------------------------------------------------------
+# Auth Schemas
+# ---------------------------------------------------------------------------
+
+class LoginRequest(BaseModel):
+    username: str = Field(..., description="Authority ID, MP ID, or 'citizen'")
+    password: str = Field(default="demo123", description="Password")
+
+
+class UserPersona(BaseModel):
+    user_id: str
+    name: str
+    role: str                       # MP | DA | SNA | MINISTRY | CITIZEN
+    designation: str
+    jurisdiction: str
+    email: str | None = None
+    avatar_emoji: str = "👤"
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserPersona
+
+
+# ---------------------------------------------------------------------------
+# F17 Completion Verification Schemas
+# ---------------------------------------------------------------------------
+
+class CompletionVerifyRequest(BaseModel):
+    completion_notes: str | None = None
+    completion_photos: list[str] = []
+    final_expenditure_inr: int | None = None
+    submitter_role: str = "IA"
+
+
+class CompletionSignalBreakdown(BaseModel):
+    physical_progress_score: float
+    satellite_evidence_score: float
+    perceptual_image_score: float
+    citizen_feedback_score: float
+    financial_audit_score: float
+    overall_confidence_score: float
+    verdict: str                    # VERIFIED | COMPLETION_DISPUTED
+    reason_codes: list[str] = []
+
+
+class CompletionVerifyResponse(BaseModel):
+    project_id: str
+    previous_status: str
+    new_status: str                 # VERIFIED | INSPECTION_REQUIRED
+    is_verified: bool
+    verification_score: float
+    signals: CompletionSignalBreakdown
+    case_id: str | None = None
+    audit_event_id: str | None = None
+    message: str
+    verified_at: datetime | None = None
+
+
+class CompletionDossierResponse(BaseModel):
+    project_id: str
+    title: str
+    category: str
+    constituency: str
+    state: str
+    sanctioned_amount_inr: int
+    disbursed_amount_inr: int
+    status: str
+    completion_date: datetime | None = None
+    reported_progress_pct: int | None = None
+    ai_satellite_pct: int | None = None
+    citizen_satisfaction_pct: float | None = None
+    is_duplicate_photo_detected: bool = False
+    active_cases: list[dict[str, Any]] = []
+    signals: CompletionSignalBreakdown | None = None
+
+
+# ---------------------------------------------------------------------------
+# Role Dashboard Schemas
+# ---------------------------------------------------------------------------
+
+class MPInfo(BaseModel):
+    mp_id: str
+    name: str
+    mp_type: str
+    constituency: str
+    state: str
+    annual_budget_inr: int
+
+
+class MPBudgetSummary(BaseModel):
+    annual_budget_inr: int
+    total_sanctioned_inr: int
+    total_disbursed_inr: int
+    unspent_balance_inr: int
+    sanctioned_utilization_pct: float
+    disbursed_utilization_pct: float
+
+
+class MPPipeline(BaseModel):
+    recommended: int
+    sanctioned: int
+    execution: int
+    completed: int
+    verified: int
+    inspection_required: int
+
+
+class MPStatutoryCompliance(BaseModel):
+    sc_spend_pct: float
+    st_spend_pct: float
+    sc_compliant: bool
+    st_compliant: bool
+    sc_threshold_pct: float
+    st_threshold_pct: float
+
+
+class MPRiskSummary(BaseModel):
+    average_risk_score: float
+    low: int
+    medium: int
+    high: int
+    critical: int
+    open_cases_count: int
+
+
+class MPCitizenSummary(BaseModel):
+    total_reports: int
+    positive_reports: int
+    negative_reports: int
+    satisfaction_pct: float | None = None
+
+
+class MPDashboardResponse(BaseModel):
+    mp: MPInfo
+    budget_summary: MPBudgetSummary
+    pipeline: MPPipeline
+    statutory_compliance: MPStatutoryCompliance
+    risk_summary: MPRiskSummary
+    sector_breakdown: list[dict[str, Any]]
+    citizen_summary: MPCitizenSummary
+    open_cases: list[dict[str, Any]]
+    sla_pending_sanctions: list[dict[str, Any]]
+    projects: list[dict[str, Any]]
+    timestamp: str
+
+
+class MPListItem(BaseModel):
+    mp_id: str
+    name: str
+    mp_type: str
+    constituency: str
+    state: str
+    total_projects: int
+    avg_risk: float
+
+
+# DA Dashboard
+class DAInfo(BaseModel):
+    authority_id: str
+    name: str
+    district: str
+    state: str
+    email: str | None = None
+
+
+class DAPortfolioSummary(BaseModel):
+    total_projects: int
+    total_sanctioned_inr: int
+    total_disbursed_inr: int
+    utilization_pct: float
+    active_works: int
+    completed_works: int
+    inspection_required: int
+
+
+class DASLAQueue(BaseModel):
+    pending_sanctions_count: int
+    sla_breaches_count: int
+    items: list[dict[str, Any]]
+
+
+class DAPaymentHolds(BaseModel):
+    total_holds: int
+    items: list[dict[str, Any]]
+
+
+class DACases(BaseModel):
+    total_open: int
+    overdue_count: int
+    items: list[dict[str, Any]]
+
+
+class DARiskSummary(BaseModel):
+    average_risk_score: float
+    low: int
+    medium: int
+    high: int
+    critical: int
+
+
+class DADashboardResponse(BaseModel):
+    da: DAInfo
+    portfolio_summary: DAPortfolioSummary
+    sla_queue: DASLAQueue
+    payment_holds: DAPaymentHolds
+    cases: DACases
+    risk_summary: DARiskSummary
+    critical_alerts: list[dict[str, Any]]
+    projects: list[dict[str, Any]]
+    recent_activity: list[dict[str, Any]]
+    timestamp: str
+
+
+class DAListItem(BaseModel):
+    authority_id: str
+    name: str
+    district: str
+    state: str
+
+
+# SNA Dashboard
+class SNAInfo(BaseModel):
+    authority_id: str
+    name: str
+    state: str
+    email: str | None = None
+
+
+class SNAPortfolioSummary(BaseModel):
+    total_projects: int
+    total_sanctioned_inr: int
+    total_disbursed_inr: int
+    utilization_pct: float
+    active_works: int
+    completed_works: int
+    inspection_required: int
+    recommended_pending: int
+
+
+class SNARiskSummary(BaseModel):
+    average_risk_score: float
+    low: int
+    medium: int
+    high: int
+    critical: int
+    total_open_cases: int
+    sna_escalations: int
+    sna_escalation_overdue: int
+
+
+class SNADashboardResponse(BaseModel):
+    sna: SNAInfo
+    portfolio_summary: SNAPortfolioSummary
+    risk_summary: SNARiskSummary
+    escalation_queue: list[dict[str, Any]]
+    district_leaderboard: list[dict[str, Any]]
+    mp_compliance: list[dict[str, Any]]
+    anomaly_hotspots: list[dict[str, Any]]
+    recent_activity: list[dict[str, Any]]
+    timestamp: str
+
+
+class SNAListItem(BaseModel):
+    authority_id: str
+    name: str
+    state: str
+
+
+# MoSPI National Dashboard
+class NationalKPIs(BaseModel):
+    total_projects: int
+    total_states: int
+    total_mps: int
+    total_recommended_inr: int
+    total_sanctioned_inr: int
+    total_disbursed_inr: int
+    overall_utilization_pct: float
+    active_works: int
+    completed_works: int
+    inspection_required: int
+    open_cases_count: int
+
+
+class NationalRiskSummary(BaseModel):
+    average_risk_score: float
+    low: int
+    medium: int
+    high: int
+    critical: int
+    ministry_escalations: int
+    ministry_overdue: int
+
+
+class FiscalLedger(BaseModel):
+    total_portfolio_inr: int
+    total_disbursed_inr: int
+    total_held_inr: int
+    total_unreleased_inr: int
+    funds_at_risk_inr: int
+    funds_at_risk_pct: float
+    payment_holds_count: int
+    mandatory_tender_enforcements: int
+    citizen_disputes_count: int
+
+
+class MPComplianceSummary(BaseModel):
+    total_mps: int
+    sc_compliant_count: int
+    st_compliant_count: int
+    non_compliant_mps: list[dict[str, Any]]
+
+
+class MoSPIDashboardResponse(BaseModel):
+    national_kpis: NationalKPIs
+    risk_summary: NationalRiskSummary
+    fiscal_ledger: FiscalLedger
+    state_matrix: list[dict[str, Any]]
+    mp_compliance: MPComplianceSummary
+    ministry_escalation_queue: list[dict[str, Any]]
+    national_hotspots: list[dict[str, Any]]
+    recent_activity: list[dict[str, Any]]
+    timestamp: str
+
+
+

@@ -1,13 +1,14 @@
 "use client";
 
-import { use, useEffect, useState, useCallback } from "react";
-import { getProject, getCase, getProjectAudit, resetDemoSeed } from "@/lib/api";
+import { use, useEffect, useState } from "react";
+import { getProject, getCase, getProjectAudit, resetDemoSeed, verifyCompletion } from "@/lib/api";
 import type {
   ProjectDetail,
   PaymentSubmitResponse,
   CaseDetail,
   EvidenceSubmitResponse,
   AuditEventSummary,
+  CompletionVerifyResponse,
 } from "@/lib/types";
 import RiskBadge from "@/components/RiskBadge";
 import RiskBreakdownBar from "@/components/RiskBreakdownBar";
@@ -88,8 +89,23 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [loadingAudit, setLoadingAudit] = useState(false);
   const [resettingSeed, setResettingSeed] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [completionResult, setCompletionResult] = useState<CompletionVerifyResponse | null>(null);
+  const [verifyingCompletion, setVerifyingCompletion] = useState(false);
 
-  const loadAudit = useCallback(async () => {
+  async function handleRunCompletionVerification() {
+    setVerifyingCompletion(true);
+    try {
+      const res = await verifyCompletion(id);
+      setCompletionResult(res);
+      await load();
+    } catch (err) {
+      alert("Completion verification failed: " + (err instanceof Error ? err.message : "Error"));
+    } finally {
+      setVerifyingCompletion(false);
+    }
+  }
+
+  async function loadAudit() {
     setLoadingAudit(true);
     try {
       const events = await getProjectAudit(id);
@@ -99,18 +115,18 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     } finally {
       setLoadingAudit(false);
     }
-  }, [id]);
+  }
 
-  const loadCase = useCallback(async (caseId: string) => {
+  async function loadCase(caseId: string) {
     try {
       const c = await getCase(caseId);
       setActiveCase(c);
     } catch {
       // non-critical
     }
-  }, []);
+  }
 
-  const load = useCallback(async () => {
+  async function load() {
     setLoading(true);
     setLoadError(null);
     try {
@@ -135,7 +151,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     } finally {
       setLoading(false);
     }
-  }, [id, loadCase, loadAudit]);
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -521,6 +537,110 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </section>
         )}
 
+        {/* F17 AI Completion Verification Section */}
+        <section className="card bg-white border-[#D5DCE5] p-5 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✅</span>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A2240]">
+                  F17 — AI MULTI-SIGNAL COMPLETION VERIFICATION
+                </h3>
+              </div>
+              <p className="text-[11px] text-[#64748B] mt-0.5">
+                Synthesizes physical progress records, Sentinel-2 optical satellite delta, perceptual photo hashes (pHash), citizen ground disputes, and payment consistency.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRunCompletionVerification}
+              disabled={verifyingCompletion}
+              className="px-3.5 py-1.5 rounded bg-[#166534] hover:bg-[#14532D] text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+            >
+              {verifyingCompletion ? (
+                <>
+                  <span className="animate-spin">🔄</span>
+                  <span>Synthesizing Signals…</span>
+                </>
+              ) : (
+                <>
+                  <span>🔍</span>
+                  <span>Run AI Completion Verification</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {completionResult && (
+            <div className={`p-4 rounded-lg border text-xs space-y-3 ${completionResult.is_verified ? "bg-[#F0FDF4] border-[#86EFAC]" : "bg-[#FEF2F2] border-[#FECACA]"}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{completionResult.is_verified ? "🏆" : "🚨"}</span>
+                  <div>
+                    <h4 className={`font-bold text-sm ${completionResult.is_verified ? "text-[#166534]" : "text-[#991B1B]"}`}>
+                      {completionResult.is_verified ? "PROJECT COMPLETION VERIFIED" : "COMPLETION DISPUTED — INSPECTION REQUIRED"}
+                    </h4>
+                    <p className="text-[10px] text-[#64748B]">{completionResult.message}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-[#64748B] uppercase font-bold">Confidence Score</span>
+                  <p className={`text-xl font-bold font-mono ${completionResult.is_verified ? "text-[#166534]" : "text-[#991B1B]"}`}>
+                    {completionResult.verification_score}/100
+                  </p>
+                </div>
+              </div>
+
+              {/* 5-Signal Breakdown Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 pt-2 border-t border-[#E2E8F0]">
+                <div className="p-2 rounded bg-white border border-[#E2E8F0] text-center">
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase">1. Progress History</span>
+                  <p className="text-xs font-bold font-mono text-[#0F172A] mt-0.5">
+                    {completionResult.signals.physical_progress_score}%
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-white border border-[#E2E8F0] text-center">
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase">2. Satellite Delta</span>
+                  <p className="text-xs font-bold font-mono text-[#0F172A] mt-0.5">
+                    {completionResult.signals.satellite_evidence_score}%
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-white border border-[#E2E8F0] text-center">
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase">3. Photo Authenticity</span>
+                  <p className="text-xs font-bold font-mono text-[#0F172A] mt-0.5">
+                    {completionResult.signals.perceptual_image_score}%
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-white border border-[#E2E8F0] text-center">
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase">4. Citizen Feedback</span>
+                  <p className="text-xs font-bold font-mono text-[#0F172A] mt-0.5">
+                    {completionResult.signals.citizen_feedback_score}%
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-white border border-[#E2E8F0] text-center">
+                  <span className="text-[9px] font-bold text-[#64748B] uppercase">5. Financial Audit</span>
+                  <p className="text-xs font-bold font-mono text-[#0F172A] mt-0.5">
+                    {completionResult.signals.financial_audit_score}%
+                  </p>
+                </div>
+              </div>
+
+              {completionResult.signals.reason_codes.length > 0 && (
+                <div className="pt-2">
+                  <span className="text-[10px] font-bold text-[#991B1B] uppercase">Flagged Discrepancy Codes:</span>
+                  <div className="flex gap-1 flex-wrap mt-1">
+                    {completionResult.signals.reason_codes.map((rc) => (
+                      <span key={rc} className="px-2 py-0.5 rounded text-[10px] font-bold bg-white text-[#991B1B] border border-[#FECACA]">
+                        {rc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* Audit Trail Section */}
         <section>
           <AuditTrailTimeline
@@ -535,3 +655,4 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     </div>
   );
 }
+
