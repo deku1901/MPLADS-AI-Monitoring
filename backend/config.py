@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     PHASH_HAMMING_THRESHOLD: int = 10
     PROGRESS_MISMATCH_THRESHOLD_PCT: float = 20.0
     SATELLITE_STALL_DAYS: int = 90
+    COST_OVERRUN_MONITOR_THRESHOLD_PCT: float = 25.0   # configurable; not a statutory mandate
 
     # ---- SLA windows (in real hours; divided by acceleration factor in demo) ----
     SLA_SANCTION_DEADLINE_DAYS: int = 45

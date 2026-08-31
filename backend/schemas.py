@@ -492,4 +492,221 @@ class FinancialScanResponse(BaseModel):
 
 
 
+# ---------------------------------------------------------------------------
+# Cost Overrun Detection Schemas (Slice 7 / F14)
+# ---------------------------------------------------------------------------
+
+class CostOverrunAnalysisResponse(BaseModel):
+    project_id: str
+    project_title: str
+    original_estimate_inr: int
+    revised_estimate_inr: int
+    actual_expenditure_inr: int
+    estimate_increase_inr: int
+    estimate_increase_pct: float
+    actual_vs_original_pct: float
+    actual_vs_revised_pct: float
+    remaining_balance_inr: int
+    monitoring_threshold_pct: float
+    overrun_flags: list[str]
+    overrun_status: str
+    risk_level: str
+    recommended_action: str
+    analysis_summary: str
+    sanction_date: str | None = None
+    category: str | None = None
+    constituency: str | None = None
+
+
+class CostOverrunScanResponse(BaseModel):
+    project_id: str
+    original_estimate_inr: int
+    revised_estimate_inr: int
+    actual_expenditure_inr: int
+    estimate_increase_inr: int
+    estimate_increase_pct: float
+    actual_vs_original_pct: float
+    actual_vs_revised_pct: float
+    remaining_balance_inr: int
+    monitoring_threshold_pct: float
+    overrun_flags: list[str]
+    overrun_status: str
+    risk_level: str
+    previous_risk_score: int
+    updated_risk_score: int
+    risk_breakdown: dict[str, Any]
+    old_project_status: str
+    new_project_status: str
+    case_id: str | None
+    inspection_triggered: bool
+    action_taken: str
+    recommended_action: str
+    analysis_summary: str
+
+
+# ---------------------------------------------------------------------------
+# Unified AI Analytics Dashboard Schemas (Slice 8 / F15)
+# ---------------------------------------------------------------------------
+
+class PortfolioSummary(BaseModel):
+    total_projects: int
+    total_recommended_inr: int
+    total_sanctioned_inr: int
+    total_disbursed_inr: int
+    total_pending_payments_inr: int
+    total_unreleased_inr: int
+    overall_fund_utilization_pct: float
+    statutory_deadline_compliance_pct: float
+    active_works_count: int
+    completed_works_count: int
+    inspection_required_count: int
+
+
+class RiskTierItem(BaseModel):
+    tier: str
+    range: str
+    count: int
+    percentage: float
+    color: str
+    label: str
+
+
+class RiskDistribution(BaseModel):
+    low_risk_count: int
+    medium_risk_count: int
+    high_risk_count: int
+    critical_risk_count: int
+    average_risk_score: float
+    risk_tiers: list[RiskTierItem]
+
+
+class ActiveInterventionsSummary(BaseModel):
+    total_active_interventions: int
+    payment_holds_count: int
+    open_cases_count: int
+    mandatory_tender_clusters_count: int
+    satellite_discrepancies_count: int
+    delayed_stalled_count: int
+    fiscal_anomalies_count: int
+    cost_overruns_count: int
+    citizen_disputes_count: int
+
+
+class AuthorityWorkloadItem(BaseModel):
+    authority_id: str
+    name: str
+    role: str
+    jurisdiction: str
+    email: str | None = None
+    assigned_open_cases: int
+    sla_breach_count: int
+
+
+class ModuleHealthItem(BaseModel):
+    module_id: str
+    name: str
+    status: str
+    signals_analyzed: int
+    active_interventions: int
+    last_active: str
+
+
+class DashboardProjectItem(BaseModel):
+    project_id: str
+    title: str
+    category: str
+    constituency: str
+    state: str
+    status: str
+    recommended_amount_inr: int
+    sanctioned_amount_inr: int
+    disbursed_amount_inr: int
+    risk_score: int
+    risk_tier: str
+    mandatory_tender: bool
+    active_case_id: str | None = None
+    anomaly_flags: list[str] = []
+    reported_progress_pct: int | None = None
+    ai_evidence_pct: int | None = None
+
+
+class DashboardCaseItem(BaseModel):
+    case_id: str
+    project_id: str
+    project_title: str
+    assigned_tier: str
+    status: str
+    reason_codes: list[str]
+    risk_score_at_creation: int
+    created_at: str | None = None
+    sla_deadline: str | None = None
+
+
+class DashboardActivityItem(BaseModel):
+    event_id: str
+    event_type: str
+    project_id: str | None = None
+    actor_role: str | None = None
+    description: str
+    timestamp: str | None = None
+
+
+class PortfolioDashboardResponse(BaseModel):
+    portfolio_summary: PortfolioSummary
+    risk_distribution: RiskDistribution
+    active_interventions: ActiveInterventionsSummary
+    authority_workload: list[AuthorityWorkloadItem]
+    module_health_status: list[ModuleHealthItem]
+    projects: list[DashboardProjectItem]
+    open_cases: list[DashboardCaseItem]
+    recent_activity: list[DashboardActivityItem]
+    timestamp: str
+
+
+# ---------------------------------------------------------------------------
+# Accountability Clock & Escalation Endpoints (Slice 9 / F16)
+# ---------------------------------------------------------------------------
+
+class OpenCaseItem(BaseModel):
+    """A single open case enriched with live countdown telemetry."""
+    case_id: str
+    project_id: str
+    project_title: str | None = None
+    assigned_tier: str
+    status: str
+    reason_codes: list[str] = []
+    risk_score_at_creation: int
+    response_deadline: datetime | None = None
+    time_remaining_seconds: int | None = None          # negative = overdue
+    is_overdue: bool = False
+    escalation_count: int = 0
+    created_at: datetime | None = None
+    ai_explanation: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class OpenCasesResponse(BaseModel):
+    open_cases: list[OpenCaseItem]
+    total_open: int
+    overdue_count: int
+    by_tier: dict[str, int]
+
+
+class SimulateNoResponseResponse(BaseModel):
+    case_id: str
+    project_id: str
+    previous_status: str
+    new_status: str
+    previous_tier: str
+    new_tier: str
+    escalation_level: int           # 1=L2, 2=L3
+    new_response_deadline: datetime | None = None
+    time_remaining_seconds: int | None = None
+    notification_dispatched: bool
+    escalation_event_id: str | None = None
+    at_maximum_tier: bool
+    message: str
+
 

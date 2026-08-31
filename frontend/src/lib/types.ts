@@ -474,5 +474,218 @@ export interface FinancialScanResponse {
   payments: PaymentInstallmentItem[];
 }
 
+// ---------------------------------------------------------------------------
+// Cost Overrun Detection (Slice 7 / F14)
+// ---------------------------------------------------------------------------
+
+export interface CostOverrunAnalysisResponse {
+  project_id: string;
+  project_title: string;
+  original_estimate_inr: number;
+  revised_estimate_inr: number;
+  actual_expenditure_inr: number;
+  estimate_increase_inr: number;
+  estimate_increase_pct: number;
+  actual_vs_original_pct: number;
+  actual_vs_revised_pct: number;
+  remaining_balance_inr: number;
+  monitoring_threshold_pct: number;
+  overrun_flags: string[];
+  overrun_status: string;
+  risk_level: string;
+  recommended_action: string;
+  analysis_summary: string;
+  sanction_date?: string | null;
+  category?: string | null;
+  constituency?: string | null;
+}
+
+export interface CostOverrunScanResponse {
+  project_id: string;
+  original_estimate_inr: number;
+  revised_estimate_inr: number;
+  actual_expenditure_inr: number;
+  estimate_increase_inr: number;
+  estimate_increase_pct: number;
+  actual_vs_original_pct: number;
+  actual_vs_revised_pct: number;
+  remaining_balance_inr: number;
+  monitoring_threshold_pct: number;
+  overrun_flags: string[];
+  overrun_status: string;
+  risk_level: string;
+  previous_risk_score: number;
+  updated_risk_score: number;
+  risk_breakdown: RiskBreakdown;
+  old_project_status: string;
+  new_project_status: string;
+  case_id: string | null;
+  inspection_triggered: boolean;
+  action_taken: string;
+  recommended_action: string;
+  analysis_summary: string;
+}
+
+// ---------------------------------------------------------------------------
+// Unified AI Analytics Dashboard (Slice 8 / F15)
+// ---------------------------------------------------------------------------
+
+export interface PortfolioSummary {
+  total_projects: number;
+  total_recommended_inr: number;
+  total_sanctioned_inr: number;
+  total_disbursed_inr: number;
+  total_pending_payments_inr: number;
+  total_unreleased_inr: number;
+  overall_fund_utilization_pct: number;
+  statutory_deadline_compliance_pct: number;
+  active_works_count: number;
+  completed_works_count: number;
+  inspection_required_count: number;
+}
+
+export interface RiskTierItem {
+  tier: string;
+  range: string;
+  count: number;
+  percentage: number;
+  color: string;
+  label: string;
+}
+
+export interface RiskDistribution {
+  low_risk_count: number;
+  medium_risk_count: number;
+  high_risk_count: number;
+  critical_risk_count: number;
+  average_risk_score: number;
+  risk_tiers: RiskTierItem[];
+}
+
+export interface ActiveInterventionsSummary {
+  total_active_interventions: number;
+  payment_holds_count: number;
+  open_cases_count: number;
+  mandatory_tender_clusters_count: number;
+  satellite_discrepancies_count: number;
+  delayed_stalled_count: number;
+  fiscal_anomalies_count: number;
+  cost_overruns_count: number;
+  citizen_disputes_count: number;
+}
+
+export interface AuthorityWorkloadItem {
+  authority_id: string;
+  name: string;
+  role: string;
+  jurisdiction: string;
+  email?: string | null;
+  assigned_open_cases: number;
+  sla_breach_count: number;
+}
+
+export interface ModuleHealthItem {
+  module_id: string;
+  name: string;
+  status: string;
+  signals_analyzed: number;
+  active_interventions: number;
+  last_active: string;
+}
+
+export interface DashboardProjectItem {
+  project_id: string;
+  title: string;
+  category: string;
+  constituency: string;
+  state: string;
+  status: string;
+  recommended_amount_inr: number;
+  sanctioned_amount_inr: number;
+  disbursed_amount_inr: number;
+  risk_score: number;
+  risk_tier: string;
+  mandatory_tender: boolean;
+  active_case_id?: string | null;
+  anomaly_flags: string[];
+  reported_progress_pct?: number | null;
+  ai_evidence_pct?: number | null;
+}
+
+export interface DashboardCaseItem {
+  case_id: string;
+  project_id: string;
+  project_title: string;
+  assigned_tier: string;
+  status: string;
+  reason_codes: string[];
+  risk_score_at_creation: number;
+  created_at?: string | null;
+  sla_deadline?: string | null;
+}
+
+export interface DashboardActivityItem {
+  event_id: string;
+  event_type: string;
+  project_id?: string | null;
+  actor_role?: string | null;
+  description: string;
+  timestamp?: string | null;
+}
+
+export interface PortfolioDashboardResponse {
+  portfolio_summary: PortfolioSummary;
+  risk_distribution: RiskDistribution;
+  active_interventions: ActiveInterventionsSummary;
+  authority_workload: AuthorityWorkloadItem[];
+  module_health_status: ModuleHealthItem[];
+  projects: DashboardProjectItem[];
+  open_cases: DashboardCaseItem[];
+  recent_activity: DashboardActivityItem[];
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// Accountability Clock & Escalation (Slice 9 / F16)
+// ---------------------------------------------------------------------------
+
+export interface OpenCaseItem {
+  case_id: string;
+  project_id: string;
+  project_title?: string | null;
+  assigned_tier: string;
+  status: string;
+  reason_codes: string[];
+  risk_score_at_creation: number;
+  response_deadline?: string | null;
+  time_remaining_seconds?: number | null;
+  is_overdue: boolean;
+  escalation_count: number;
+  created_at?: string | null;
+  ai_explanation?: string | null;
+}
+
+export interface OpenCasesResponse {
+  open_cases: OpenCaseItem[];
+  total_open: number;
+  overdue_count: number;
+  by_tier: Record<string, number>;
+}
+
+export interface SimulateNoResponseResponse {
+  case_id: string;
+  project_id: string;
+  previous_status: string;
+  new_status: string;
+  previous_tier: string;
+  new_tier: string;
+  escalation_level: number;
+  new_response_deadline?: string | null;
+  time_remaining_seconds?: number | null;
+  notification_dispatched: boolean;
+  escalation_event_id?: string | null;
+  at_maximum_tier: boolean;
+  message: string;
+}
 
 

@@ -116,6 +116,18 @@ export default function HeaderNav({
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <nav className="flex items-center overflow-x-auto text-xs font-medium no-scrollbar">
             <Link
+              href="/dashboard"
+              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
+                pathname === "/dashboard" || pathname === "/"
+                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
+                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              }`}
+            >
+              <span>🏛️</span>
+              <span>Portfolio Command Center</span>
+            </Link>
+
+            <Link
               href={`/projects/${projectId}`}
               className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
                 pathname?.includes("/projects")
@@ -198,9 +210,34 @@ export default function HeaderNav({
               <span>📈</span>
               <span>7. Financial Analytics</span>
             </Link>
+
+            <Link
+              href="/cost-overrun"
+              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
+                pathname === "/cost-overrun"
+                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
+                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              }`}
+            >
+              <span>💰</span>
+              <span>8. Cost Overrun Detection</span>
+            </Link>
+
+            <Link
+              href="/escalation"
+              className={`px-4 py-2.5 whitespace-nowrap transition-colors flex items-center gap-1.5 border-b-2 ${
+                pathname === "/escalation"
+                  ? "bg-[#0A2240] text-white font-bold border-[#E67E22]"
+                  : "text-slate-200 hover:bg-[#1E4E8C] hover:text-white border-transparent"
+              }`}
+            >
+              <span>⏱️</span>
+              <span>9. Accountability Clock</span>
+            </Link>
           </nav>
         </div>
       </div>
     </header>
   );
 }
+

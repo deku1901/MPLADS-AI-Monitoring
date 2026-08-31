@@ -257,6 +257,76 @@ def list_cases(
     return cases
 
 
+@app.get(
+    "/api/cases/open",
+    response_model=schemas.OpenCasesResponse,
+    tags=["Escalation", "Cases"],
+)
+def get_open_cases(db: Session = Depends(get_db)):
+    """
+    Retrieve all currently active (non-resolved) cases enriched with live SLA countdown.
+    Each case includes:
+      - time_remaining_seconds: seconds until response_deadline (negative = overdue)
+      - is_overdue: True if authority has missed their SLA window
+      - escalation_count: number of escalation events recorded
+    Used by the F16 Accountability Clock dashboard for real-time SLA tracking.
+    """
+    from datetime import datetime as _dt
+    from models import Project as _Proj
+
+    CLOSED_STATUSES = ("RESOLVED", "DISMISSED")
+    active_cases = (
+        db.query(Case)
+        .filter(Case.status.notin_(CLOSED_STATUSES))
+        .order_by(Case.created_at.desc())
+        .all()
+    )
+
+    now = _dt.utcnow()
+    enriched: list[schemas.OpenCaseItem] = []
+    overdue_count = 0
+    by_tier: dict[str, int] = {}
+
+    for c in active_cases:
+        proj = db.query(_Proj).filter_by(project_id=c.project_id).first()
+        remaining = None
+        overdue = False
+        if c.response_deadline:
+            remaining = int((c.response_deadline - now).total_seconds())
+            overdue = remaining < 0
+
+        if overdue:
+            overdue_count += 1
+
+        tier = c.assigned_tier or "DA"
+        by_tier[tier] = by_tier.get(tier, 0) + 1
+
+        esc_count = len(c.escalation_events) if c.escalation_events else 0
+
+        enriched.append(schemas.OpenCaseItem(
+            case_id=c.case_id,
+            project_id=c.project_id,
+            project_title=proj.title if proj else c.project_id,
+            assigned_tier=tier,
+            status=c.status,
+            reason_codes=c.reason_codes or [],
+            risk_score_at_creation=c.risk_score_at_creation or 0,
+            response_deadline=c.response_deadline,
+            time_remaining_seconds=remaining,
+            is_overdue=overdue,
+            escalation_count=esc_count,
+            created_at=c.created_at,
+            ai_explanation=c.ai_explanation,
+        ))
+
+    return schemas.OpenCasesResponse(
+        open_cases=enriched,
+        total_open=len(enriched),
+        overdue_count=overdue_count,
+        by_tier=by_tier,
+    )
+
+
 @app.get("/api/cases/{case_id}", response_model=schemas.CaseDetail, tags=["Cases"])
 def get_case_details(case_id: str, db: Session = Depends(get_db)):
     """Retrieve full case details, AI explanation, evidence submissions, and escalation history."""
@@ -638,5 +708,202 @@ def scan_project_financials(
         logger.error(f"Financial scan failed for {project_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Financial scan failed: {e}")
 
+
+# ---------------------------------------------------------------------------
+# Cost Overrun Detection Endpoints (Slice 7 / F14)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/cost-overrun/projects/{project_id}/analysis",
+    response_model=schemas.CostOverrunAnalysisResponse,
+    tags=["CostOverrun"],
+)
+def get_project_cost_overrun_analysis(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve cost-overrun analysis for a project.
+    Computes original vs revised vs actual budget metrics.
+    Read-only -- no state changes.
+    """
+    try:
+        from services.cost_overrun import get_cost_overrun_analysis
+        return get_cost_overrun_analysis(db, project_id=project_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Cost-overrun analysis failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Cost-overrun analysis failed: {e}")
+
+
+@app.post(
+    "/api/cost-overrun/projects/{project_id}/scan",
+    response_model=schemas.CostOverrunScanResponse,
+    tags=["CostOverrun"],
+)
+def scan_project_cost_overrun(
+    project_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Execute cost-overrun detection scan on a project.
+    - Evaluates original, revised, and actual budget trajectory
+    - Recalculates unified risk score
+    - Escalates to INSPECTION_REQUIRED with CASE-COST-{suffix} when conditions met
+    - Dispatches DA notification and writes audit trail
+    - Idempotent: repeated scans do not duplicate open cases
+    """
+    try:
+        from services.cost_overrun import scan_project_cost_overrun as _scan_co
+        return _scan_co(db, project_id=project_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Cost-overrun scan failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Cost-overrun scan failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Unified AI Analytics Dashboard Endpoints (Slice 8 / F15)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/analytics/dashboard",
+    response_model=schemas.PortfolioDashboardResponse,
+    tags=["AnalyticsDashboard"],
+)
+def get_portfolio_dashboard(
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve unified portfolio-level executive decision dashboard telemetry.
+    Aggregates metrics across F1–F14:
+      - Portfolio overview & funding utilization
+      - Risk distribution (Low, Medium, High, Critical)
+      - Active interventions summary (Payment Holds, Cases, Tender Enforcements, Discrepancies)
+      - Authority workload (DA, SNA, MoSPI)
+      - F1–F14 module health status
+      - Filtered project drill-downs
+      - Open cases & recent immutable activity feed
+    """
+    try:
+        from services.dashboard import get_portfolio_dashboard as _get_dash
+        return _get_dash(db)
+    except Exception as e:
+        logger.error(f"Dashboard aggregation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Dashboard aggregation failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Accountability Clock & Escalation Endpoints (Slice 9 / F16)
+# ---------------------------------------------------------------------------
+
+@app.post(
+    "/api/cases/{case_id}/simulate-no-response",
+    response_model=schemas.SimulateNoResponseResponse,
+    tags=["Escalation"],
+)
+def simulate_no_response(
+    case_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Demo-mode trigger: immediately advance a case one escalation tier
+    (equivalent to the SLA timer expiring without an authority response).
+
+    Reuses the production escalate_case() service — no logic is duplicated.
+    Used by the F16 Accountability Clock for judge demo walk-through:
+        DA → SNA → MoSPI (Tier 1 → L2 → L3)
+
+    Returns:
+      - previous/new status & tier
+      - new response deadline with time_remaining_seconds
+      - whether the case has reached the maximum tier
+      - escalation_event_id of the new EscalationEvent created
+    """
+    from datetime import datetime as _dt
+
+    case = db.query(Case).filter_by(case_id=case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+    if case.status in ("RESOLVED", "DISMISSED"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Case {case_id} is already {case.status} and cannot be escalated",
+        )
+
+    from services.cases import escalate_case as _escalate, TIERS as _TIERS
+
+    prev_status = case.status
+    prev_tier = case.assigned_tier or "DA"
+    tier_idx = _TIERS.index(prev_tier) if prev_tier in _TIERS else 0
+    at_max = tier_idx >= len(_TIERS) - 1
+
+    if at_max:
+        # Already at MINISTRY — mark as unresolved maximum tier
+        from services.audit import write_event as _write_event
+        _write_event(
+            db,
+            event_type="CASE_MAXIMUM_TIER_REACHED",
+            project_id=case.project_id,
+            case_id=case_id,
+            description=f"Case {case_id} at maximum tier MINISTRY with no resolution.",
+        )
+        db.commit()
+        return schemas.SimulateNoResponseResponse(
+            case_id=case_id,
+            project_id=case.project_id,
+            previous_status=prev_status,
+            new_status=case.status,
+            previous_tier=prev_tier,
+            new_tier=prev_tier,
+            escalation_level=tier_idx + 1,
+            new_response_deadline=case.response_deadline,
+            time_remaining_seconds=None,
+            notification_dispatched=False,
+            escalation_event_id=None,
+            at_maximum_tier=True,
+            message=f"Case {case_id} is at the maximum tier (MINISTRY). No further escalation possible.",
+        )
+
+    updated = _escalate(db, case_id, reason="DEMO_NO_RESPONSE")
+    db.commit()
+
+    # Retrieve the most recent escalation event for this case
+    from models import EscalationEvent as _EscEv
+    latest_esc = (
+        db.query(_EscEv)
+        .filter_by(case_id=case_id)
+        .order_by(_EscEv.triggered_at.desc())
+        .first()
+    )
+
+    now = _dt.utcnow()
+    remaining = None
+    if updated and updated.response_deadline:
+        remaining = int((updated.response_deadline - now).total_seconds())
+
+    new_tier_idx = _TIERS.index(updated.assigned_tier) if updated and updated.assigned_tier in _TIERS else tier_idx + 1
+
+    return schemas.SimulateNoResponseResponse(
+        case_id=case_id,
+        project_id=updated.project_id if updated else case.project_id,
+        previous_status=prev_status,
+        new_status=updated.status if updated else prev_status,
+        previous_tier=prev_tier,
+        new_tier=updated.assigned_tier if updated else prev_tier,
+        escalation_level=new_tier_idx + 1,
+        new_response_deadline=updated.response_deadline if updated else None,
+        time_remaining_seconds=remaining,
+        notification_dispatched=True,
+        escalation_event_id=latest_esc.escalation_id if latest_esc else None,
+        at_maximum_tier=(new_tier_idx >= len(_TIERS) - 1),
+        message=(
+            f"Case {case_id} escalated from {prev_tier} → {updated.assigned_tier if updated else prev_tier} "
+            f"(DEMO_NO_RESPONSE). New SLA deadline set."
+        ),
+    )
 
 

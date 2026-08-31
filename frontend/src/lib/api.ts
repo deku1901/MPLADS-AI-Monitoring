@@ -28,6 +28,11 @@ import type {
   DelayScanResponse,
   FinancialAnalysisResponse,
   FinancialScanResponse,
+  CostOverrunAnalysisResponse,
+  CostOverrunScanResponse,
+  PortfolioDashboardResponse,
+  OpenCasesResponse,
+  SimulateNoResponseResponse,
 } from "./types";
 
 
@@ -357,5 +362,46 @@ export async function scanProjectFinancials(
   });
 }
 
+// ---------------------------------------------------------------------------
+// Cost Overrun Detection (Slice 7 / F14)
+// ---------------------------------------------------------------------------
 
+export async function getCostOverrunAnalysis(
+  projectId: string
+): Promise<CostOverrunAnalysisResponse> {
+  return request<CostOverrunAnalysisResponse>(`/api/cost-overrun/projects/${projectId}/analysis`);
+}
+
+export async function scanProjectCostOverrun(
+  projectId: string
+): Promise<CostOverrunScanResponse> {
+  return request<CostOverrunScanResponse>(`/api/cost-overrun/projects/${projectId}/scan`, {
+    method: "POST",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Unified AI Analytics Dashboard (Slice 8 / F15)
+// ---------------------------------------------------------------------------
+
+export async function getPortfolioDashboard(): Promise<PortfolioDashboardResponse> {
+  return request<PortfolioDashboardResponse>("/api/analytics/dashboard");
+}
+
+// ---------------------------------------------------------------------------
+// Accountability Clock & Escalation (Slice 9 / F16)
+// ---------------------------------------------------------------------------
+
+export async function getOpenCases(): Promise<OpenCasesResponse> {
+  return request<OpenCasesResponse>("/api/cases/open");
+}
+
+export async function simulateNoResponse(
+  caseId: string
+): Promise<SimulateNoResponseResponse> {
+  return request<SimulateNoResponseResponse>(
+    `/api/cases/${caseId}/simulate-no-response`,
+    { method: "POST" }
+  );
+}
 
